@@ -9,7 +9,5 @@ class MenuCreate(BaseModel):
     description: str
 
 
-class Menu(BaseModel):
-    id: int
-    title: str
-    description: str
+class SubmenuCreate(MenuCreate):
+    pass
