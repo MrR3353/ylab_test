@@ -5,7 +5,7 @@ metadata = MetaData()
 menu = Table(
     'menu',
     metadata,
-    Column('id', Integer, primary_key=True),
+    Column('id', Integer, primary_key=True, autoincrement=True),
     Column('title', String, nullable=False),
     Column('description', String, nullable=False),
 )
@@ -13,7 +13,7 @@ menu = Table(
 submenu = Table(
     'submenu',
     metadata,
-    Column('id', Integer, primary_key=True),
+    Column('id', Integer, primary_key=True, autoincrement=True),
     Column('title', String, nullable=False),
     Column('description', String, nullable=False),
     Column('menu_id', Integer, ForeignKey('menu.id', ondelete='CASCADE'))
@@ -22,7 +22,7 @@ submenu = Table(
 dish = Table(
     'dish',
     metadata,
-    Column('id', Integer, primary_key=True),
+    Column('id', Integer, primary_key=True, autoincrement=True),
     Column('title', String, nullable=False),
     Column('description', String, nullable=False),
     Column('price', String, nullable=False),
