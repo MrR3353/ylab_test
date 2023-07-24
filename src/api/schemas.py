@@ -10,14 +10,17 @@ class MenuRequest(BaseModel):
 
 class MenuResponse(MenuRequest):
     id: str
+    submenus_count: int
+    dishes_count: int
 
 
 class SubmenuRequest(MenuRequest):
     pass
 
 
-class SubmenuResponse(MenuResponse):
-    pass
+class SubmenuResponse(SubmenuRequest):
+    id: str
+    dishes_count: int
 
 
 class DishRequest(MenuRequest):

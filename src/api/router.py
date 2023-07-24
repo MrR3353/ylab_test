@@ -17,10 +17,21 @@ router = APIRouter(prefix='/api/v1', tags=['Api'])
 async def get_all_menu(session: AsyncSession = Depends(get_async_session)):
     query = select(menu)
     results = await session.execute(query)
-    json_result = []
+    json_results = []
     for result in results:
-        json_result.append(dict(zip(('id', 'title', 'description'), tuple(map(str, result)))))
-    return json_result
+        json_result = dict(zip(('id', 'title', 'description'), tuple(map(str, result))))
+        menu_id = result[0]
+        query = select(submenu.c.id).where(submenu.c.menu_id == menu_id)
+        submenus = (await session.execute(query)).fetchall()
+        dishes_count = 0
+        for sb in submenus:
+            print(sb[0])
+            query = select(dish).where(dish.c.submenu_id == sb[0])
+            dishes_count += len((await session.execute(query)).fetchall())
+        json_result['submenus_count'] = len(submenus)
+        json_result['dishes_count'] = dishes_count
+        json_results.append(json_result)
+    return json_results
 
 
 @router.get('/menus/{menu_id}', response_model=dict)
@@ -29,8 +40,17 @@ async def get_menu(menu_id: int, response: Response, session: AsyncSession = Dep
     result = await session.execute(query)
     result = result.fetchall()
     if len(result):    # if this id was found
-        result = dict(zip(('id', 'title', 'description'), tuple(map(str, result[0]))))
-        return result
+        json_result = dict(zip(('id', 'title', 'description'), tuple(map(str, result[0]))))
+        query = select(submenu.c.id).where(submenu.c.menu_id == menu_id)
+        submenus = (await session.execute(query)).fetchall()
+        dishes_count = 0
+        for sb in submenus:
+            print(sb[0])
+            query = select(dish).where(dish.c.submenu_id == sb[0])
+            dishes_count += len((await session.execute(query)).fetchall())
+        json_result['submenus_count'] = len(submenus)
+        json_result['dishes_count'] = dishes_count
+        return json_result
     else:
         response.status_code = 404
         return {'detail': 'menu not found'}
@@ -44,6 +64,8 @@ async def add_menu(new_menu: MenuRequest, response: Response, session: AsyncSess
     result = list(result.fetchone())  # tuple to list
     result[0] = str(result[0])  # convert to str for tests
     result = dict(zip(('id', 'title', 'description'), result))
+    result['submenus_count'] = 0
+    result['dishes_count'] = 0
     response.status_code = 201
     return result
 
@@ -83,11 +105,15 @@ async def delete_all_menu(session: AsyncSession = Depends(get_async_session)):
 @router.get('/menus/{menu_id}/submenus', response_model=List[SubmenuResponse])
 async def get_all_submenu(menu_id: int, session: AsyncSession = Depends(get_async_session)):
     query = select(submenu).where(submenu.c.menu_id == menu_id)
-    results = await session.execute(query)
-    json_result = []
-    for result in results:
-        json_result.append(dict(zip(('id', 'title', 'description'), tuple(map(str, result)))))
-    return json_result
+    submenus = await session.execute(query)
+    json_results = []
+    for sb in submenus:
+        json_result = dict(zip(('id', 'title', 'description'), tuple(map(str, sb))))
+        query = select(dish).where(dish.c.submenu_id == int(sb[0]))
+        dishes_count = len((await session.execute(query)).fetchall())
+        json_result['dishes_count'] = dishes_count
+        json_results.append(json_result)
+    return json_results
 
 
 @router.get('/menus/{menu_id}/submenus/{submenu_id}', response_model=dict)
@@ -97,6 +123,9 @@ async def get_submenu(menu_id: int, submenu_id: int, response: Response, session
     result = result.fetchall()
     if len(result):    # if this id was found
         result = dict(zip(('id', 'title', 'description'), tuple(map(str, result[0]))))
+        query = select(dish).where(dish.c.submenu_id == submenu_id)
+        dishes_count = len((await session.execute(query)).fetchall())
+        result['dishes_count'] = dishes_count
         return result
     else:
         response.status_code = 404
@@ -113,6 +142,7 @@ async def add_submenu(menu_id: int, new_submenu: SubmenuRequest, response: Respo
         await session.commit()
         result = result.fetchall()
         result = dict(zip(('id', 'title', 'description'), tuple(map(str, result[0]))))
+        result['dishes_count'] = 0
         response.status_code = 201
         return result
     except exceptions.ForeignKeyViolationError:
