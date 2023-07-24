@@ -3,11 +3,26 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class MenuCreate(BaseModel):
-    # id: Optional[int] = 1
+class MenuRequest(BaseModel):
     title: str
     description: str
 
 
-class SubmenuCreate(MenuCreate):
+class MenuResponse(MenuRequest):
+    id: str
+
+
+class SubmenuRequest(MenuRequest):
     pass
+
+
+class SubmenuResponse(MenuResponse):
+    pass
+
+
+class DishRequest(MenuRequest):
+    price: str
+
+
+class DishResponse(DishRequest):
+    id: str
