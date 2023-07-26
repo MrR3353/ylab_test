@@ -1,4 +1,3 @@
-import json
 from typing import List
 
 from fastapi import APIRouter, Depends, Response, HTTPException
@@ -10,10 +9,12 @@ from database import get_async_session
 from api.schemas import MenuRequest, MenuResponse, SubmenuRequest, SubmenuResponse, DishRequest, DishResponse
 from asyncpg import exceptions
 
-router = APIRouter(prefix='/api/v1', tags=['Api'])
+router_menu = APIRouter(prefix='/api/v1/menus', tags=['Menu'])
+router_submenu = APIRouter(prefix='/api/v1/menus/{menu_id}/submenus', tags=['Submenu'])
+router_dish = APIRouter(prefix='/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes', tags=['Dish'])
 
 
-@router.get('/menus', response_model=List[MenuResponse])
+@router_menu.get('/', response_model=List[MenuResponse])
 async def get_all_menu(session: AsyncSession = Depends(get_async_session)):
     query = select(menu)
     results = await session.execute(query)
@@ -33,7 +34,7 @@ async def get_all_menu(session: AsyncSession = Depends(get_async_session)):
     return json_results
 
 
-@router.get('/menus/{menu_id}', response_model=MenuResponse)
+@router_menu.get('/{menu_id}', response_model=MenuResponse)
 async def get_menu(menu_id: int, session: AsyncSession = Depends(get_async_session)):
     query = select(menu).where(menu.c.id == menu_id)
     result = await session.execute(query)
@@ -53,7 +54,7 @@ async def get_menu(menu_id: int, session: AsyncSession = Depends(get_async_sessi
         raise HTTPException(status_code=404, detail="menu not found")
 
 
-@router.post('/menus', response_model=MenuResponse)
+@router_menu.post('/', response_model=MenuResponse)
 async def add_menu(new_menu: MenuRequest, response: Response, session: AsyncSession = Depends(get_async_session)):
     query = insert(menu).values(**new_menu.dict()).returning('*')
     result = await session.execute(query)
@@ -67,7 +68,7 @@ async def add_menu(new_menu: MenuRequest, response: Response, session: AsyncSess
     return result
 
 
-@router.patch('/menus/{menu_id}', response_model=MenuResponse)
+@router_menu.patch('/{menu_id}', response_model=MenuResponse)
 async def update_menu(menu_id: int, new_menu: MenuRequest, session: AsyncSession = Depends(get_async_session)):
     query = update(menu).where(menu.c.id == menu_id).values(**new_menu.dict()).returning('*')
     result = await session.execute(query)
@@ -88,7 +89,7 @@ async def update_menu(menu_id: int, new_menu: MenuRequest, session: AsyncSession
         raise HTTPException(status_code=404, detail="menu not found")
 
 
-@router.delete('/menus/{menu_id}')
+@router_menu.delete('/{menu_id}')
 async def delete_menu(menu_id: int, session: AsyncSession = Depends(get_async_session)):
     query = delete(menu).where(menu.c.id == menu_id)
     await session.execute(query)
@@ -96,7 +97,7 @@ async def delete_menu(menu_id: int, session: AsyncSession = Depends(get_async_se
     return {}
 
 
-@router.delete('/menus')
+@router_menu.delete('/')
 async def delete_all_menu(session: AsyncSession = Depends(get_async_session)):
     query = delete(menu)
     await session.execute(query)
@@ -104,7 +105,7 @@ async def delete_all_menu(session: AsyncSession = Depends(get_async_session)):
     return {}
 
 
-@router.get('/menus/{menu_id}/submenus', response_model=List[SubmenuResponse])
+@router_submenu.get('/', response_model=List[SubmenuResponse])
 async def get_all_submenu(menu_id: int, session: AsyncSession = Depends(get_async_session)):
     query = select(submenu).where(submenu.c.menu_id == menu_id)
     submenus = await session.execute(query)
@@ -118,7 +119,7 @@ async def get_all_submenu(menu_id: int, session: AsyncSession = Depends(get_asyn
     return json_results
 
 
-@router.get('/menus/{menu_id}/submenus/{submenu_id}', response_model=SubmenuResponse)
+@router_submenu.get('/{submenu_id}', response_model=SubmenuResponse)
 async def get_submenu(menu_id: int, submenu_id: int, session: AsyncSession = Depends(get_async_session)):
     query = select(submenu).where(submenu.c.menu_id == menu_id).where(submenu.c.id == submenu_id)
     result = await session.execute(query)
@@ -133,7 +134,7 @@ async def get_submenu(menu_id: int, submenu_id: int, session: AsyncSession = Dep
         raise HTTPException(status_code=404, detail="submenu not found")
 
 
-@router.post('/menus/{menu_id}/submenus', response_model=SubmenuResponse)
+@router_submenu.post('/', response_model=SubmenuResponse)
 async def add_submenu(menu_id: int, new_submenu: SubmenuRequest, response: Response, session: AsyncSession = Depends(get_async_session)):
     new_submenu = new_submenu.dict()
     new_submenu['menu_id'] = menu_id  # adding fk field
@@ -156,7 +157,7 @@ async def add_submenu(menu_id: int, new_submenu: SubmenuRequest, response: Respo
             print(e)
 
 
-@router.patch('/menus/{menu_id}/submenus/{submenu_id}', response_model=SubmenuResponse)
+@router_submenu.patch('/{submenu_id}', response_model=SubmenuResponse)
 async def update_submenu(menu_id: int, submenu_id: int, new_submenu: MenuRequest, response: Response, session: AsyncSession = Depends(get_async_session)):
     query = update(submenu).where(submenu.c.menu_id == menu_id).where(submenu.c.id == submenu_id).values(**new_submenu.dict()).returning('*')
     result = await session.execute(query)
@@ -172,7 +173,7 @@ async def update_submenu(menu_id: int, submenu_id: int, new_submenu: MenuRequest
         raise HTTPException(status_code=404, detail="submenu not found")
 
 
-@router.delete('/menus/{menu_id}/submenus/{submenu_id}')
+@router_submenu.delete('/{submenu_id}')
 async def delete_submenu(menu_id: int, submenu_id: int, session: AsyncSession = Depends(get_async_session)):
     query = delete(submenu).where(submenu.c.menu_id == menu_id).where(submenu.c.id == submenu_id)
     await session.execute(query)
@@ -181,7 +182,7 @@ async def delete_submenu(menu_id: int, submenu_id: int, session: AsyncSession = 
 
 
 # TODO: maybe need to check menu_id for dishes???
-@router.get('/menus/{menu_id}/submenus/{submenu_id}/dishes', response_model=List[DishResponse])
+@router_dish.get('/', response_model=List[DishResponse])
 async def get_all_dishes(menu_id: int, submenu_id: int, session: AsyncSession = Depends(get_async_session)):
     query = select(dish).where(dish.c.submenu_id == submenu_id)
     results = await session.execute(query)
@@ -192,7 +193,7 @@ async def get_all_dishes(menu_id: int, submenu_id: int, session: AsyncSession = 
     return json_result
 
 
-@router.get('/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}', response_model=DishResponse)
+@router_dish.get('/{dish_id}', response_model=DishResponse)
 async def get_dish(menu_id: int, submenu_id: int, dish_id: int, session: AsyncSession = Depends(get_async_session)):
     query = select(dish).where(dish.c.submenu_id == submenu_id).where(dish.c.id == dish_id)
     result = await session.execute(query)
@@ -204,7 +205,7 @@ async def get_dish(menu_id: int, submenu_id: int, dish_id: int, session: AsyncSe
         raise HTTPException(status_code=404, detail="dish not found")
 
 
-@router.post('/menus/{menu_id}/submenus/{submenu_id}/dishes', response_model=DishResponse)
+@router_dish.post('/', response_model=DishResponse)
 async def add_dish(menu_id: int, submenu_id: int, new_dish: DishRequest, response: Response,
                       session: AsyncSession = Depends(get_async_session)):
     new_dish = new_dish.dict()
@@ -228,7 +229,7 @@ async def add_dish(menu_id: int, submenu_id: int, new_dish: DishRequest, respons
             print(e)
 
 
-@router.patch('/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}', response_model=DishResponse)
+@router_dish.patch('/{dish_id}', response_model=DishResponse)
 async def update_dish(menu_id: int, submenu_id: int, dish_id: int, new_dish: DishRequest, session: AsyncSession = Depends(get_async_session)):
     new_dish = new_dish.dict()
     new_dish['price'] = str(round(float(new_dish['price']), 2))  # rounding price
@@ -243,7 +244,7 @@ async def update_dish(menu_id: int, submenu_id: int, dish_id: int, new_dish: Dis
         raise HTTPException(status_code=404, detail="dish not found")
 
 
-@router.delete('/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}')
+@router_dish.delete('/{dish_id}')
 async def delete_dish(menu_id: int, submenu_id: int, dish_id: int, session: AsyncSession = Depends(get_async_session)):
     query = delete(dish).where(dish.c.id == dish_id).where(dish.c.submenu_id == submenu_id)
     await session.execute(query)
