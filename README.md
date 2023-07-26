@@ -1,3 +1,6 @@
+Тестовое задание для YLab_University.
+Fastapi + asyncpg + PostgreSQL
+
 Запуск проекта:
 
 - создать сервер и базу данных в Postgresql (можно сделать это через pgAdmin), параметры БД можно найти в файле .env

@@ -184,7 +184,6 @@ async def get_all_dishes(menu_id: int, submenu_id: int, session: AsyncSession = 
     results = await session.execute(query)
     json_result = []
     for result in results:
-        print(result)
         json_result.append(dict(zip(('id', 'title', 'description', 'price'), tuple(map(str, result)))))
     return json_result
 
