@@ -1,7 +1,8 @@
 from decimal import Decimal
 from typing import Optional
 import sqlalchemy
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, AfterValidator
+from typing_extensions import Annotated
 
 
 class MenuRequest(BaseModel):
@@ -24,8 +25,17 @@ class SubmenuResponse(SubmenuRequest):
     dishes_count: int
 
 
+def check_num(v: str) -> str:
+    float(v)
+    # assert v**0.5 % 1 == 0, f'{v} is not a square number'
+    return v
+
+
+StrContainingNum = Annotated[str, AfterValidator(check_num)]
+
+
 class DishRequest(MenuRequest):
-    price: str
+    price: StrContainingNum = Field(examples=['12.51'])
 
 
 class DishResponse(DishRequest):

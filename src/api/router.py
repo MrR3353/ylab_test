@@ -1,5 +1,6 @@
 from typing import List
 
+import sqlalchemy.exc
 from fastapi import APIRouter, Depends, Response, HTTPException
 from sqlalchemy import select, insert, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.models import menu, submenu, dish
 from database import get_async_session
 from api.schemas import MenuRequest, MenuResponse, SubmenuRequest, SubmenuResponse, DishRequest, DishResponse
-from asyncpg import exceptions
 
 router_menu = APIRouter(prefix='/api/v1/menus', tags=['Menu'])
 router_submenu = APIRouter(prefix='/api/v1/menus/{menu_id}/submenus', tags=['Submenu'])
@@ -147,14 +147,10 @@ async def add_submenu(menu_id: int, new_submenu: SubmenuRequest, response: Respo
         result['dishes_count'] = 0
         response.status_code = 201
         return result
-    except exceptions.ForeignKeyViolationError:
-        #     cant catch this
-        pass
+    except sqlalchemy.exc.IntegrityError:  # ForeignKeyViolationError
+        raise HTTPException(status_code=400, detail="menu not found")
     except Exception as e:
-        if e.code == 'gkpj':    # ForeignKeyViolationError
-            raise HTTPException(status_code=400, detail="menu not found")
-        else:
-            print(e)
+        print(e)
 
 
 @router_submenu.patch('/{submenu_id}', response_model=SubmenuResponse)
@@ -219,14 +215,10 @@ async def add_dish(menu_id: int, submenu_id: int, new_dish: DishRequest, respons
         result = dict(zip(('id', 'title', 'description', 'price'), tuple(map(str, result[0]))))
         response.status_code = 201
         return result
-    except exceptions.ForeignKeyViolationError:
-        #     cant catch this
-        pass
+    except sqlalchemy.exc.IntegrityError:  # ForeignKeyViolationError
+        raise HTTPException(status_code=400, detail="submenu not found")
     except Exception as e:
-        if e.code == 'gkpj':    # ForeignKeyViolationError
-            raise HTTPException(status_code=400, detail="submenu not found")
-        else:
-            print(e)
+        print(e)
 
 
 @router_dish.patch('/{dish_id}', response_model=DishResponse)
