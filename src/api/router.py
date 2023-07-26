@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, HTTPException
 from sqlalchemy import select, insert, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +25,6 @@ async def get_all_menu(session: AsyncSession = Depends(get_async_session)):
         submenus = (await session.execute(query)).fetchall()
         dishes_count = 0
         for sb in submenus:
-            print(sb[0])
             query = select(dish).where(dish.c.submenu_id == sb[0])
             dishes_count += len((await session.execute(query)).fetchall())
         json_result['submenus_count'] = len(submenus)
@@ -34,8 +33,8 @@ async def get_all_menu(session: AsyncSession = Depends(get_async_session)):
     return json_results
 
 
-@router.get('/menus/{menu_id}', response_model=dict)
-async def get_menu(menu_id: int, response: Response, session: AsyncSession = Depends(get_async_session)):
+@router.get('/menus/{menu_id}', response_model=MenuResponse)
+async def get_menu(menu_id: int, session: AsyncSession = Depends(get_async_session)):
     query = select(menu).where(menu.c.id == menu_id)
     result = await session.execute(query)
     result = result.fetchall()
@@ -45,15 +44,13 @@ async def get_menu(menu_id: int, response: Response, session: AsyncSession = Dep
         submenus = (await session.execute(query)).fetchall()
         dishes_count = 0
         for sb in submenus:
-            print(sb[0])
             query = select(dish).where(dish.c.submenu_id == sb[0])
             dishes_count += len((await session.execute(query)).fetchall())
         json_result['submenus_count'] = len(submenus)
         json_result['dishes_count'] = dishes_count
         return json_result
     else:
-        response.status_code = 404
-        return {'detail': 'menu not found'}
+        raise HTTPException(status_code=404, detail="menu not found")
 
 
 @router.post('/menus', response_model=MenuResponse)
@@ -70,20 +67,25 @@ async def add_menu(new_menu: MenuRequest, response: Response, session: AsyncSess
     return result
 
 
-@router.patch('/menus/{menu_id}', response_model=dict)
-async def update_menu(menu_id: int, new_menu: MenuRequest, response: Response, session: AsyncSession = Depends(get_async_session)):
+@router.patch('/menus/{menu_id}', response_model=MenuResponse)
+async def update_menu(menu_id: int, new_menu: MenuRequest, session: AsyncSession = Depends(get_async_session)):
     query = update(menu).where(menu.c.id == menu_id).values(**new_menu.dict()).returning('*')
     result = await session.execute(query)
     await session.commit()
     result = result.fetchall()
     if len(result):  # if this id was found
-        result = list(result[0])  # tuple to list
-        result[0] = str(result[0])  # convert to str for tests
-        result = dict(zip(('id', 'title', 'description'), result))
-        return result
+        json_result = dict(zip(('id', 'title', 'description'), tuple(map(str, result[0]))))
+        query = select(submenu.c.id).where(submenu.c.menu_id == menu_id)
+        submenus = (await session.execute(query)).fetchall()
+        dishes_count = 0
+        for sb in submenus:
+            query = select(dish).where(dish.c.submenu_id == sb[0])
+            dishes_count += len((await session.execute(query)).fetchall())
+        json_result['submenus_count'] = len(submenus)
+        json_result['dishes_count'] = dishes_count
+        return json_result
     else:
-        response.status_code = 404
-        return {'detail': 'menu not found'}
+        raise HTTPException(status_code=404, detail="menu not found")
 
 
 @router.delete('/menus/{menu_id}')
@@ -116,8 +118,8 @@ async def get_all_submenu(menu_id: int, session: AsyncSession = Depends(get_asyn
     return json_results
 
 
-@router.get('/menus/{menu_id}/submenus/{submenu_id}', response_model=dict)
-async def get_submenu(menu_id: int, submenu_id: int, response: Response, session: AsyncSession = Depends(get_async_session)):
+@router.get('/menus/{menu_id}/submenus/{submenu_id}', response_model=SubmenuResponse)
+async def get_submenu(menu_id: int, submenu_id: int, session: AsyncSession = Depends(get_async_session)):
     query = select(submenu).where(submenu.c.menu_id == menu_id).where(submenu.c.id == submenu_id)
     result = await session.execute(query)
     result = result.fetchall()
@@ -128,11 +130,10 @@ async def get_submenu(menu_id: int, submenu_id: int, response: Response, session
         result['dishes_count'] = dishes_count
         return result
     else:
-        response.status_code = 404
-        return {'detail': 'submenu not found'}
+        raise HTTPException(status_code=404, detail="submenu not found")
 
 
-@router.post('/menus/{menu_id}/submenus', response_model=dict)
+@router.post('/menus/{menu_id}/submenus', response_model=SubmenuResponse)
 async def add_submenu(menu_id: int, new_submenu: SubmenuRequest, response: Response, session: AsyncSession = Depends(get_async_session)):
     new_submenu = new_submenu.dict()
     new_submenu['menu_id'] = menu_id  # adding fk field
@@ -149,13 +150,13 @@ async def add_submenu(menu_id: int, new_submenu: SubmenuRequest, response: Respo
         #     cant catch this
         pass
     except Exception as e:
-        if e.code == 'gkpj':
-            return {'detail': 'menu not found'}
+        if e.code == 'gkpj':    # ForeignKeyViolationError
+            raise HTTPException(status_code=400, detail="menu not found")
         else:
             print(e)
 
 
-@router.patch('/menus/{menu_id}/submenus/{submenu_id}', response_model=dict)
+@router.patch('/menus/{menu_id}/submenus/{submenu_id}', response_model=SubmenuResponse)
 async def update_submenu(menu_id: int, submenu_id: int, new_submenu: MenuRequest, response: Response, session: AsyncSession = Depends(get_async_session)):
     query = update(submenu).where(submenu.c.menu_id == menu_id).where(submenu.c.id == submenu_id).values(**new_submenu.dict()).returning('*')
     result = await session.execute(query)
@@ -163,10 +164,12 @@ async def update_submenu(menu_id: int, submenu_id: int, new_submenu: MenuRequest
     result = result.fetchall()
     if len(result):  # if this id was found
         result = dict(zip(('id', 'title', 'description'), tuple(map(str, result[0]))))
+        query = select(dish).where(dish.c.submenu_id == submenu_id)
+        dishes_count = len((await session.execute(query)).fetchall())
+        result['dishes_count'] = dishes_count
         return result
     else:
-        response.status_code = 404
-        return {'detail': 'submenu not found'}
+        raise HTTPException(status_code=404, detail="submenu not found")
 
 
 @router.delete('/menus/{menu_id}/submenus/{submenu_id}')
@@ -184,12 +187,13 @@ async def get_all_dishes(menu_id: int, submenu_id: int, session: AsyncSession = 
     results = await session.execute(query)
     json_result = []
     for result in results:
+        print(result)
         json_result.append(dict(zip(('id', 'title', 'description', 'price'), tuple(map(str, result)))))
     return json_result
 
 
-@router.get('/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}', response_model=dict)
-async def get_dish(menu_id: int, submenu_id: int, dish_id: int, response: Response, session: AsyncSession = Depends(get_async_session)):
+@router.get('/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}', response_model=DishResponse)
+async def get_dish(menu_id: int, submenu_id: int, dish_id: int, session: AsyncSession = Depends(get_async_session)):
     query = select(dish).where(dish.c.submenu_id == submenu_id).where(dish.c.id == dish_id)
     result = await session.execute(query)
     result = result.fetchall()
@@ -197,14 +201,14 @@ async def get_dish(menu_id: int, submenu_id: int, dish_id: int, response: Respon
         result = dict(zip(('id', 'title', 'description', 'price'), tuple(map(str, result[0]))))
         return result
     else:
-        response.status_code = 404
-        return {'detail': 'dish not found'}
+        raise HTTPException(status_code=404, detail="dish not found")
 
 
-@router.post('/menus/{menu_id}/submenus/{submenu_id}/dishes', response_model=dict)
+@router.post('/menus/{menu_id}/submenus/{submenu_id}/dishes', response_model=DishResponse)
 async def add_dish(menu_id: int, submenu_id: int, new_dish: DishRequest, response: Response,
                       session: AsyncSession = Depends(get_async_session)):
     new_dish = new_dish.dict()
+    new_dish['price'] = str(round(float(new_dish['price']), 2))  # rounding price
     new_dish['submenu_id'] = submenu_id  # adding fk field
     query = insert(dish).values(**new_dish).returning('*')
     try:
@@ -218,15 +222,17 @@ async def add_dish(menu_id: int, submenu_id: int, new_dish: DishRequest, respons
         #     cant catch this
         pass
     except Exception as e:
-        if e.code == 'gkpj':
-            return {'detail': 'submenu not found'}
+        if e.code == 'gkpj':    # ForeignKeyViolationError
+            raise HTTPException(status_code=400, detail="submenu not found")
         else:
             print(e)
 
 
-@router.patch('/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}', response_model=dict)
-async def update_dish(menu_id: int, submenu_id: int, dish_id: int, new_dish: DishRequest, response: Response, session: AsyncSession = Depends(get_async_session)):
-    query = update(dish).where(dish.c.id == dish_id).where(dish.c.submenu_id == submenu_id).values(**new_dish.dict()).returning('*')
+@router.patch('/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}', response_model=DishResponse)
+async def update_dish(menu_id: int, submenu_id: int, dish_id: int, new_dish: DishRequest, session: AsyncSession = Depends(get_async_session)):
+    new_dish = new_dish.dict()
+    new_dish['price'] = str(round(float(new_dish['price']), 2))  # rounding price
+    query = update(dish).where(dish.c.id == dish_id).where(dish.c.submenu_id == submenu_id).values(**new_dish).returning('*')
     result = await session.execute(query)
     await session.commit()
     result = result.fetchall()
@@ -234,8 +240,7 @@ async def update_dish(menu_id: int, submenu_id: int, dish_id: int, new_dish: Dis
         result = dict(zip(('id', 'title', 'description', 'price'), tuple(map(str, result[0]))))
         return result
     else:
-        response.status_code = 404
-        return {'detail': 'dish not found'}
+        raise HTTPException(status_code=404, detail="dish not found")
 
 
 @router.delete('/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}')

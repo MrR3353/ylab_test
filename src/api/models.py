@@ -1,4 +1,4 @@
-from sqlalchemy import MetaData, Table, Column, Integer, String, ForeignKey, UUID
+from sqlalchemy import MetaData, Table, Column, Integer, String, ForeignKey, UUID, Numeric
 
 metadata = MetaData()
 
@@ -25,6 +25,7 @@ dish = Table(
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('title', String, nullable=False),
     Column('description', String, nullable=False),
+    # Column('price', Numeric, nullable=False),
     Column('price', String, nullable=False),
     Column('submenu_id', Integer, ForeignKey('submenu.id', ondelete='CASCADE'))
 )

@@ -1,5 +1,6 @@
+from decimal import Decimal
 from typing import Optional
-
+import sqlalchemy
 from pydantic import BaseModel
 
 
@@ -29,3 +30,4 @@ class DishRequest(MenuRequest):
 
 class DishResponse(DishRequest):
     id: str
+    price: str
