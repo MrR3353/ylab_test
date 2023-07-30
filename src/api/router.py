@@ -56,7 +56,7 @@ async def get_menu(menu_id: int, session: AsyncSession = Depends(get_async_sessi
 
 @router_menu.post('/', response_model=MenuResponse)
 async def add_menu(new_menu: MenuRequest, response: Response, session: AsyncSession = Depends(get_async_session)):
-    query = insert(menu).values(**new_menu.dict()).returning('*')
+    query = insert(menu).values(**new_menu.model_dump()).returning('*')
     result = await session.execute(query)
     await session.commit()
     result = list(result.fetchone())  # tuple to list
@@ -70,7 +70,7 @@ async def add_menu(new_menu: MenuRequest, response: Response, session: AsyncSess
 
 @router_menu.patch('/{menu_id}', response_model=MenuResponse)
 async def update_menu(menu_id: int, new_menu: MenuRequest, session: AsyncSession = Depends(get_async_session)):
-    query = update(menu).where(menu.c.id == menu_id).values(**new_menu.dict()).returning('*')
+    query = update(menu).where(menu.c.id == menu_id).values(**new_menu.model_dump()).returning('*')
     result = await session.execute(query)
     await session.commit()
     result = result.fetchall()
@@ -136,7 +136,7 @@ async def get_submenu(menu_id: int, submenu_id: int, session: AsyncSession = Dep
 
 @router_submenu.post('/', response_model=SubmenuResponse)
 async def add_submenu(menu_id: int, new_submenu: SubmenuRequest, response: Response, session: AsyncSession = Depends(get_async_session)):
-    new_submenu = new_submenu.dict()
+    new_submenu = new_submenu.model_dump()
     new_submenu['menu_id'] = menu_id  # adding fk field
     query = insert(submenu).values(**new_submenu).returning('*')
     try:
@@ -155,7 +155,7 @@ async def add_submenu(menu_id: int, new_submenu: SubmenuRequest, response: Respo
 
 @router_submenu.patch('/{submenu_id}', response_model=SubmenuResponse)
 async def update_submenu(menu_id: int, submenu_id: int, new_submenu: MenuRequest, response: Response, session: AsyncSession = Depends(get_async_session)):
-    query = update(submenu).where(submenu.c.menu_id == menu_id).where(submenu.c.id == submenu_id).values(**new_submenu.dict()).returning('*')
+    query = update(submenu).where(submenu.c.menu_id == menu_id).where(submenu.c.id == submenu_id).values(**new_submenu.model_dump()).returning('*')
     result = await session.execute(query)
     await session.commit()
     result = result.fetchall()
@@ -203,7 +203,7 @@ async def get_dish(menu_id: int, submenu_id: int, dish_id: int, session: AsyncSe
 @router_dish.post('/', response_model=DishResponse)
 async def add_dish(menu_id: int, submenu_id: int, new_dish: DishRequest, response: Response,
                       session: AsyncSession = Depends(get_async_session)):
-    new_dish = new_dish.dict()
+    new_dish = new_dish.model_dump()
     new_dish['price'] = str(round(float(new_dish['price']), 2))  # rounding price
     new_dish['submenu_id'] = submenu_id  # adding fk field
     query = insert(dish).values(**new_dish).returning('*')
@@ -222,7 +222,7 @@ async def add_dish(menu_id: int, submenu_id: int, new_dish: DishRequest, respons
 
 @router_dish.patch('/{dish_id}', response_model=DishResponse)
 async def update_dish(menu_id: int, submenu_id: int, dish_id: int, new_dish: DishRequest, session: AsyncSession = Depends(get_async_session)):
-    new_dish = new_dish.dict()
+    new_dish = new_dish.model_dump()
     new_dish['price'] = str(round(float(new_dish['price']), 2))  # rounding price
     query = update(dish).where(dish.c.id == dish_id).where(dish.c.submenu_id == submenu_id).values(**new_dish).returning('*')
     result = await session.execute(query)

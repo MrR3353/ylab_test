@@ -19,6 +19,18 @@ Fastapi + asyncpg + PostgreSQL
 `uvicorn main:app --reload`
 - сервер поднялся ♂
 
+Докер приложение + БД:
+docker compose build
+docker compose up
+
+
+Докер для тестов:
+docker compose -f docker-compose-test.yml build
+docker compose -f docker-compose-test.yml up
+
+Тесты:
+pytest -v -s tests/
+
 
 
 
