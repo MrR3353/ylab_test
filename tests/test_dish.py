@@ -1,7 +1,7 @@
 from httpx import AsyncClient
 import test_menu, test_submenu
 
-LAST_DISH = None
+LAST_DISH = {}
 
 
 async def test_add_menu_submenu(ac: AsyncClient):
@@ -67,7 +67,7 @@ async def test_delete_dishes(ac: AsyncClient, count=2):
         response = await ac.delete(f'/api/v1/menus/{test_menu.LAST_MENU["id"]}/submenus/{test_submenu.LAST_SUBMENU["id"]}/dishes/{LAST_DISH["id"]}')
         assert response.status_code == 200
         response = await ac.get(f'/api/v1/menus/{test_menu.LAST_MENU["id"]}/submenus/{test_submenu.LAST_SUBMENU["id"]}/dishes/')
-        LAST_DISH = get_all_response[-1] if get_all_response else None
+        LAST_DISH = get_all_response[-1] if get_all_response else {}
         assert get_all_response == response.json()
         assert response.status_code == 200
 
