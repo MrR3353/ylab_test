@@ -1,4 +1,4 @@
-FROM python:3.11.3
+FROM python:3.10-slim
 
 RUN mkdir /fastapi_ylab
 WORKDIR /fastapi_ylab

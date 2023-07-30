@@ -1,38 +1,12 @@
-Тестовое задание для YLab_University.
-Fastapi + asyncpg + PostgreSQL
+# Тестовое задание для YLab_University.
 
-Запуск проекта:
+Стек: Fastapi + asyncpg + PostgreSQL + Docker Compose
 
-- создать сервер и базу данных в Postgresql (можно сделать это через pgAdmin), параметры БД можно найти в файле .env
-- открыть директорию ylab_test
-- создать виртуальное окружение:
-`python -m venv venv`
-- активировть его, любым способом, например:
-`venv\Scripts\activate.bat`
-- установить все зависимости из requirements.txt:
-`pip install -r requirements.txt`
-- произвести миграции базы данных:
-`alembic upgrade head`
-- перейти в папку src:
-`cd src`
-- запустить сервер из папки src проекта:
-`uvicorn main:app --reload`
-- сервер поднялся ♂
+### **Запуск проекта:**  
 
-Докер приложение + БД:
-docker compose build
-docker compose up
+Приложение + БД:  
+`docker compose up --build`
 
-
-Докер для тестов:
-docker compose -f docker-compose-test.yml build
-docker compose -f docker-compose-test.yml up
-
-Тесты:
-pytest -v -s tests/
-
-
-
-
-Тесты и результаты тестов можно найти в папке tests.
+Тесты (запускать после приложения с БД):  
+`docker compose -f docker-compose-test.yml up --build`
 

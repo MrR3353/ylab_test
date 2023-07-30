@@ -1,28 +1,8 @@
 version: "3.8"
 services:
-  fastapi_ylab:
-    container_name: fastapi_ylab
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - .env_prod
-    entrypoint: sh -c "alembic upgrade head && cd src && uvicorn main:app --host 0.0.0.0 --port 8000"
-    volumes:
-      - shared-volume:/src/generated_files
-    networks:
-      - ylab_network
-    ports:
-      - 8000:8000
-    depends_on:
-      postgres_ylab:
-        condition: service_healthy
-
-
-
   postgres_ylab:
     container_name: postgres_ylab
-    image: postgres:14.2
+    image: postgres:15.1-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data
     env_file:
@@ -41,6 +21,25 @@ services:
       timeout: 30s
       retries: 5
       start_period: 80s
+
+
+  fastapi_ylab:
+    container_name: fastapi_ylab
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env_prod
+    entrypoint: sh -c "alembic upgrade head && cd src && uvicorn main:app --host 0.0.0.0 --port 8000"
+    volumes:
+      - shared-volume:/src/generated_files
+    networks:
+      - ylab_network
+    ports:
+      - 8000:8000
+    depends_on:
+      postgres_ylab:
+        condition: service_healthy
 
 
 networks:
