@@ -54,8 +54,8 @@ async def get_menu(menu_id: int, session: AsyncSession = Depends(get_async_sessi
         raise HTTPException(status_code=404, detail="menu not found")
 
 
-@router_menu.post('/', response_model=MenuResponse)
-async def add_menu(new_menu: MenuRequest, response: Response, session: AsyncSession = Depends(get_async_session)):
+@router_menu.post('/', status_code=201, response_model=MenuResponse)
+async def add_menu(new_menu: MenuRequest, session: AsyncSession = Depends(get_async_session)):
     query = insert(menu).values(**new_menu.model_dump()).returning('*')
     result = await session.execute(query)
     await session.commit()
@@ -64,7 +64,6 @@ async def add_menu(new_menu: MenuRequest, response: Response, session: AsyncSess
     result = dict(zip(('id', 'title', 'description'), result))
     result['submenus_count'] = 0
     result['dishes_count'] = 0
-    response.status_code = 201
     return result
 
 
@@ -134,8 +133,8 @@ async def get_submenu(menu_id: int, submenu_id: int, session: AsyncSession = Dep
         raise HTTPException(status_code=404, detail="submenu not found")
 
 
-@router_submenu.post('/', response_model=SubmenuResponse)
-async def add_submenu(menu_id: int, new_submenu: SubmenuRequest, response: Response, session: AsyncSession = Depends(get_async_session)):
+@router_submenu.post('/', status_code=201, response_model=SubmenuResponse)
+async def add_submenu(menu_id: int, new_submenu: SubmenuRequest, session: AsyncSession = Depends(get_async_session)):
     new_submenu = new_submenu.model_dump()
     new_submenu['menu_id'] = menu_id  # adding fk field
     query = insert(submenu).values(**new_submenu).returning('*')
@@ -145,7 +144,6 @@ async def add_submenu(menu_id: int, new_submenu: SubmenuRequest, response: Respo
         result = result.fetchall()
         result = dict(zip(('id', 'title', 'description'), tuple(map(str, result[0]))))
         result['dishes_count'] = 0
-        response.status_code = 201
         return result
     except sqlalchemy.exc.IntegrityError:  # ForeignKeyViolationError
         raise HTTPException(status_code=400, detail="menu not found")
@@ -154,7 +152,7 @@ async def add_submenu(menu_id: int, new_submenu: SubmenuRequest, response: Respo
 
 
 @router_submenu.patch('/{submenu_id}', response_model=SubmenuResponse)
-async def update_submenu(menu_id: int, submenu_id: int, new_submenu: MenuRequest, response: Response, session: AsyncSession = Depends(get_async_session)):
+async def update_submenu(menu_id: int, submenu_id: int, new_submenu: MenuRequest, session: AsyncSession = Depends(get_async_session)):
     query = update(submenu).where(submenu.c.menu_id == menu_id).where(submenu.c.id == submenu_id).values(**new_submenu.model_dump()).returning('*')
     result = await session.execute(query)
     await session.commit()
@@ -200,8 +198,8 @@ async def get_dish(menu_id: int, submenu_id: int, dish_id: int, session: AsyncSe
         raise HTTPException(status_code=404, detail="dish not found")
 
 
-@router_dish.post('/', response_model=DishResponse)
-async def add_dish(menu_id: int, submenu_id: int, new_dish: DishRequest, response: Response,
+@router_dish.post('/', status_code=201, response_model=DishResponse)
+async def add_dish(menu_id: int, submenu_id: int, new_dish: DishRequest,
                       session: AsyncSession = Depends(get_async_session)):
     new_dish = new_dish.model_dump()
     new_dish['price'] = str(round(float(new_dish['price']), 2))  # rounding price
@@ -212,7 +210,6 @@ async def add_dish(menu_id: int, submenu_id: int, new_dish: DishRequest, respons
         await session.commit()
         result = result.fetchall()
         result = dict(zip(('id', 'title', 'description', 'price'), tuple(map(str, result[0]))))
-        response.status_code = 201
         return result
     except sqlalchemy.exc.IntegrityError:  # ForeignKeyViolationError
         raise HTTPException(status_code=400, detail="submenu not found")
