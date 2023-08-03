@@ -19,6 +19,7 @@ async def test_add_submenu(ac: AsyncClient):
     assert LAST_SUBMENU['title'] == new_submenu['title']
     assert LAST_SUBMENU['description'] == new_submenu['description']
     assert response.status_code == 201
+    test_menu.LAST_MENU['submenus_count'] += 1
 
 
 async def test_get_submenu(ac: AsyncClient):
@@ -59,7 +60,8 @@ async def test_delete_submenu(ac: AsyncClient, count=2):
     # deleting 2 submenus by default
     for i in range(count):
         get_all_response = await ac.get(f'/api/v1/menus/{test_menu.LAST_MENU["id"]}/submenus/')
-        get_all_response = get_all_response.json()[:-1]
+        get_all_response = get_all_response.json()
+        get_all_response.remove(LAST_SUBMENU)
 
         response = await ac.delete(f'/api/v1/menus/{test_menu.LAST_MENU["id"]}/submenus/{LAST_SUBMENU["id"]}')
         assert response.status_code == 200
@@ -67,6 +69,7 @@ async def test_delete_submenu(ac: AsyncClient, count=2):
         LAST_SUBMENU = get_all_response[-1] if get_all_response else {}
         assert get_all_response == response.json()
         assert response.status_code == 200
+        test_menu.LAST_MENU['submenus_count'] -= 1
 
 
 async def test_delete_menu(ac: AsyncClient):

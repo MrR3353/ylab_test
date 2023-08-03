@@ -26,3 +26,5 @@ archive.zip
 *~
 .*.sw?
 .cache
+
+test.py

@@ -54,7 +54,8 @@ async def test_delete_menu(ac: AsyncClient, count=2):
     # deleting 2 menus by default
     for i in range(count):
         get_all_response = await ac.get(f'/api/v1/menus/')
-        get_all_response = get_all_response.json()[:-1]
+        get_all_response = get_all_response.json()
+        get_all_response.remove(LAST_MENU)
 
         response = await ac.delete(f'/api/v1/menus/{LAST_MENU["id"]}')
         assert response.status_code == 200
