@@ -1,7 +1,7 @@
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Union
 import sqlalchemy
-from pydantic import BaseModel, Field, AfterValidator
+from pydantic import BaseModel, Field, AfterValidator, StrictStr, validator, field_validator
 from typing_extensions import Annotated
 
 
@@ -10,8 +10,12 @@ class MenuRequest(BaseModel):
     description: str
 
 
+# TODO: use UUID or convert to str faster
+IntToStr = Annotated[Union[int, str], AfterValidator(lambda num: str(num))]
+
+
 class MenuResponse(MenuRequest):
-    id: str
+    id: IntToStr
     submenus_count: int
     dishes_count: int
 
@@ -21,13 +25,12 @@ class SubmenuRequest(MenuRequest):
 
 
 class SubmenuResponse(SubmenuRequest):
-    id: str
+    id: IntToStr
     dishes_count: int
 
 
 def check_num(v: str) -> str:
     float(v)
-    # assert v**0.5 % 1 == 0, f'{v} is not a square number'
     return v
 
 
@@ -39,5 +42,5 @@ class DishRequest(MenuRequest):
 
 
 class DishResponse(DishRequest):
-    id: str
+    id: IntToStr
     price: str
