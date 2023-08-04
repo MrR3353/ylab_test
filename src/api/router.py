@@ -21,9 +21,8 @@ async def get_all_menu(session: AsyncSession = Depends(get_async_session)):
         join(submenu, submenu.c.menu_id == menu.c.id, isouter=True).\
         join(dish, dish.c.submenu_id == submenu.c.id, isouter=True).group_by(menu.c.id)
     rows = await session.execute(query)
-    rows = rows.fetchall()
-    result = [MenuResponse(**row._asdict()) for row in rows]
-    return result
+    rows = rows.all()
+    return rows
 
 
 @router_menu.get('/{menu_id}', response_model=MenuResponse)
@@ -32,20 +31,18 @@ async def get_menu(menu_id: int, session: AsyncSession = Depends(get_async_sessi
         join(submenu, submenu.c.menu_id == menu.c.id, isouter=True).\
         join(dish, dish.c.submenu_id == submenu.c.id, isouter=True).where(menu.c.id == menu_id).group_by(menu.c.id)
     row = await session.execute(query)
-    row = row.fetchone()
-    if row:    # if this id was found
-        return MenuResponse(**row._asdict())
-    else:
+    row = row.first()
+    if not row:
         raise HTTPException(status_code=404, detail="menu not found")
+    return row
 
 
 @router_menu.post('/', status_code=201, response_model=MenuResponse)
 async def add_menu(new_menu: MenuRequest, session: AsyncSession = Depends(get_async_session)):
     query = insert(menu).values(**new_menu.model_dump()).returning('*')
     row = await session.execute(query)
-    row = row.fetchone()
     await session.commit()
-    return MenuResponse(**row._asdict())
+    return row.first()
 
 
 @router_menu.patch('/{menu_id}', response_model=MenuResponse)
@@ -53,18 +50,15 @@ async def update_menu(menu_id: int, new_menu: MenuRequest, session: AsyncSession
     query = update(menu).where(menu.c.id == menu_id).values(**new_menu.model_dump()).returning('*')
     row = await session.execute(query)
     await session.commit()
-    row = row.fetchone()
-    if row:    # if this id was found
-        # TODO: try to make it in one query
-        query = select(menu, count(distinct(submenu.c.id)).label('submenus_count'), count(dish.c.id).label('dishes_count')).\
-            join(submenu, submenu.c.menu_id == menu.c.id, isouter=True).\
-            join(dish, dish.c.submenu_id == submenu.c.id,isouter=True).where(menu.c.id == menu_id).group_by(menu.c.id)
-        row = await session.execute(query)
-        row = row.fetchone()
-        if row:  # if this id was found
-            return MenuResponse(**row._asdict())
-    else:
+    row = row.first()
+    if not row:
         raise HTTPException(status_code=404, detail="menu not found")
+    # TODO: try to make it in one query
+    query = select(menu, count(distinct(submenu.c.id)).label('submenus_count'), count(dish.c.id).label('dishes_count')).\
+        join(submenu, submenu.c.menu_id == menu.c.id, isouter=True).\
+        join(dish, dish.c.submenu_id == submenu.c.id,isouter=True).where(menu.c.id == menu_id).group_by(menu.c.id)
+    row = await session.execute(query)
+    return row.first()
 
 
 @router_menu.delete('/{menu_id}')
@@ -89,9 +83,7 @@ async def get_all_submenu(menu_id: int, session: AsyncSession = Depends(get_asyn
     query = select(submenu, count(dish.c.id).label('dishes_count')).\
         join(dish, dish.c.submenu_id == submenu.c.id, isouter=True).group_by(submenu.c.id)
     rows = await session.execute(query)
-    rows = rows.fetchall()
-    result = [SubmenuResponse(**row._asdict()) for row in rows]
-    return result
+    return rows.all()
 
 
 @router_submenu.get('/{submenu_id}', response_model=SubmenuResponse)
@@ -99,11 +91,10 @@ async def get_submenu(menu_id: int, submenu_id: int, session: AsyncSession = Dep
     query = select(submenu, count(dish.c.id).label('dishes_count')).\
         join(dish, dish.c.submenu_id == submenu.c.id, isouter=True).where(submenu.c.id == submenu_id).group_by(submenu.c.id)
     row = await session.execute(query)
-    row = row.fetchone()
-    if row:    # if this id was found
-        return SubmenuResponse(**row._asdict())
-    else:
+    row = row.first()
+    if not row:
         raise HTTPException(status_code=404, detail="submenu not found")
+    return row
 
 
 @router_submenu.post('/', status_code=201, response_model=SubmenuResponse)
@@ -113,9 +104,8 @@ async def add_submenu(menu_id: int, new_submenu: SubmenuRequest, session: AsyncS
     query = insert(submenu).values(**new_submenu).returning('*')
     try:
         row = await session.execute(query)
-        row = row.fetchone()
         await session.commit()
-        return SubmenuResponse(**row._asdict())
+        return row.first()
     except sqlalchemy.exc.IntegrityError:  # ForeignKeyViolationError
         raise HTTPException(status_code=400, detail="menu not found")
     except Exception as e:
@@ -128,14 +118,13 @@ async def update_submenu(menu_id: int, submenu_id: int, new_submenu: MenuRequest
         values(**new_submenu.model_dump()).returning('*')
     row = await session.execute(query)
     await session.commit()
-    row = row.fetchone()
-    if row:  # if this id was found
-        # TODO: try to make it in one query
-        query = select(dish).where(dish.c.submenu_id == submenu_id)
-        dishes_count = len((await session.execute(query)).fetchall())
-        return SubmenuResponse(**row._asdict(), dishes_count=dishes_count)
-    else:
+    row = row.first()
+    if not row:
         raise HTTPException(status_code=404, detail="submenu not found")
+    # TODO: try to make it in one query
+    query = select(dish).where(dish.c.submenu_id == submenu_id)
+    dishes_count = len((await session.execute(query)).all())
+    return SubmenuResponse(**row._asdict(), dishes_count=dishes_count)
 
 
 @router_submenu.delete('/{submenu_id}')
@@ -151,20 +140,17 @@ async def delete_submenu(menu_id: int, submenu_id: int, session: AsyncSession = 
 async def get_all_dishes(menu_id: int, submenu_id: int, session: AsyncSession = Depends(get_async_session)):
     query = select(dish).where(dish.c.submenu_id == submenu_id)
     rows = await session.execute(query)
-    rows = rows.fetchall()
-    result = [DishResponse(**row._asdict()) for row in rows]
-    return result
+    return rows.all()
 
 
 @router_dish.get('/{dish_id}', response_model=DishResponse)
 async def get_dish(menu_id: int, submenu_id: int, dish_id: int, session: AsyncSession = Depends(get_async_session)):
     query = select(dish).where(dish.c.submenu_id == submenu_id).where(dish.c.id == dish_id)
     row = await session.execute(query)
-    row = row.fetchone()
-    if row:    # if this id was found
-        return DishResponse(**row._asdict())
-    else:
+    row = row.first()
+    if not row:
         raise HTTPException(status_code=404, detail="dish not found")
+    return row
 
 
 @router_dish.post('/', status_code=201, response_model=DishResponse)
@@ -177,9 +163,8 @@ async def add_dish(menu_id: int, submenu_id: int, new_dish: DishRequest,
     query = insert(dish).values(**new_dish).returning('*')
     try:
         row = await session.execute(query)
-        row = row.fetchone()
         await session.commit()
-        return DishResponse(**row._asdict())
+        return row.first()
     except sqlalchemy.exc.IntegrityError:  # ForeignKeyViolationError
         raise HTTPException(status_code=400, detail="submenu not found")
     except Exception as e:
@@ -194,11 +179,10 @@ async def update_dish(menu_id: int, submenu_id: int, dish_id: int, new_dish: Dis
     query = update(dish).where(dish.c.id == dish_id).where(dish.c.submenu_id == submenu_id).values(**new_dish).returning('*')
     row = await session.execute(query)
     await session.commit()
-    row = row.fetchone()
-    if row:  # if this id was found
-        return DishResponse(**row._asdict())
-    else:
+    row = row.first()
+    if not row:
         raise HTTPException(status_code=404, detail="dish not found")
+    return row
 
 
 @router_dish.delete('/{dish_id}')
