@@ -4,7 +4,6 @@ SELECT menu.*, count(distinct submenu.id) AS submenus_count , count(dish.id) AS 
 FROM menu
 LEFT JOIN submenu ON(menu.id = submenu.menu_id)
 LEFT JOIN dish ON(submenu.id = dish.submenu_id)
-WHERE menu.id = 10
 GROUP BY menu.id
 
 для конкретного id:
@@ -12,6 +11,7 @@ SELECT menu.*, count(distinct submenu.id) AS submenus_count , count(dish.id) AS 
 FROM menu
 LEFT JOIN submenu ON(menu.id = submenu.menu_id)
 LEFT JOIN dish ON(submenu.id = dish.submenu_id)
+WHERE menu.id = 10
 GROUP BY menu.id
 
 
