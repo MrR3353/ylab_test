@@ -16,8 +16,8 @@ IntToStr = Annotated[Union[int, str], AfterValidator(lambda num: str(num))]
 
 class MenuResponse(MenuRequest):
     id: IntToStr
-    submenus_count: int
-    dishes_count: int
+    submenus_count: int = 0
+    dishes_count: int = 0
 
 
 class SubmenuRequest(MenuRequest):
@@ -26,7 +26,7 @@ class SubmenuRequest(MenuRequest):
 
 class SubmenuResponse(SubmenuRequest):
     id: IntToStr
-    dishes_count: int
+    dishes_count: int = 0
 
 
 def check_num(v: str) -> str:

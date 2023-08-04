@@ -1,0 +1,57 @@
+Меню:
+все:
+SELECT menu.*, count(distinct submenu.id) AS submenus_count , count(dish.id) AS dishes_count
+FROM menu
+LEFT JOIN submenu ON(menu.id = submenu.menu_id)
+LEFT JOIN dish ON(submenu.id = dish.submenu_id)
+WHERE menu.id = 10
+GROUP BY menu.id
+
+для конкретного id:
+SELECT menu.*, count(distinct submenu.id) AS submenus_count , count(dish.id) AS dishes_count
+FROM menu
+LEFT JOIN submenu ON(menu.id = submenu.menu_id)
+LEFT JOIN dish ON(submenu.id = dish.submenu_id)
+GROUP BY menu.id
+
+
+Подменю:
+С подзапросом:
+все:
+SELECT submenu.id, submenu.title, submenu.description, submenu.menu_id,
+(SELECT count(dish.id) FROM dish WHERE dish.submenu_id = submenu.id)
+FROM submenu
+
+для конкретного id:
+SELECT submenu.id, submenu.title, submenu.description, submenu.menu_id,
+(SELECT count(dish.id) FROM dish WHERE dish.submenu_id = submenu.id)
+FROM submenu
+WHERE submenu.id = 6
+
+Группировкой:
+все:
+SELECT submenu.id, submenu.title, submenu.description, submenu.menu_id, count(dish.id) FROM submenu JOIN dish ON submenu.id = dish.submenu_id
+WHERE submenu.id = dish.submenu_id
+GROUP BY submenu.id
+
+для конкретного id:
+SELECT * FROM (SELECT submenu.id, submenu.title, submenu.description, submenu.menu_id, count(dish.id) FROM submenu JOIN dish ON submenu.id = dish.submenu_id
+WHERE submenu.id = dish.submenu_id
+GROUP BY submenu.id) AS sb
+WHERE sb.id = 6
+
+
+Join с группировкой:
+все:
+SELECT submenu.*, count(dish.id)
+FROM submenu
+LEFT JOIN dish ON(submenu.id = dish.submenu_id)
+GROUP BY submenu.id
+
+для конкретного id:
+SELECT submenu.*, count(dish.id)
+FROM submenu
+LEFT JOIN dish ON(submenu.id = dish.submenu_id)
+WHERE submenu.id = 6
+GROUP BY submenu.id
+
