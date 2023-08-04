@@ -1,5 +1,7 @@
 from fastapi import FastAPI
-from api.router import router_menu, router_submenu, router_dish
+from api.routers.menu import router_menu
+from api.routers.submenu import router_submenu
+from api.routers.dish import router_dish
 
 app = FastAPI()
 
