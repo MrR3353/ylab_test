@@ -1,22 +1,19 @@
-from typing import List
-
 import sqlalchemy
 from fastapi import Depends, HTTPException
-from sqlalchemy import select, distinct, text, insert, update, delete
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.functions import count, func
+from sqlalchemy.sql.functions import count
 
-from api.models import menu, submenu, dish
-from database import get_async_session
-
+from api.models import dish, submenu
 from api.schemas import SubmenuRequest, SubmenuResponse
+from database import get_async_session
 
 
 class SubmenuRepository:
     def __init__(self, session: AsyncSession = Depends(get_async_session)):
         self.session = session
 
-    async def get_all(self, menu_id: int) -> List[submenu]:
+    async def get_all(self, menu_id: int) -> list[submenu]:
         query = select(submenu, count(dish.c.id).label('dishes_count'))\
             .join(dish, dish.c.submenu_id == submenu.c.id, isouter=True).group_by(submenu.c.id)\
             .where(submenu.c.menu_id == menu_id)
@@ -29,7 +26,7 @@ class SubmenuRepository:
         row = await self.session.execute(query)
         row = row.first()
         if not row:
-            raise HTTPException(status_code=404, detail="submenu not found")
+            raise HTTPException(status_code=404, detail='submenu not found')
         return row
 
     async def create(self, menu_id: int, data: SubmenuRequest) -> submenu:
@@ -41,7 +38,7 @@ class SubmenuRepository:
             await self.session.commit()
             return row.first()
         except sqlalchemy.exc.IntegrityError:  # ForeignKeyViolationError
-            raise HTTPException(status_code=400, detail="menu not found")
+            raise HTTPException(status_code=400, detail='menu not found')
         except Exception as e:
             print(e)
 
@@ -52,7 +49,7 @@ class SubmenuRepository:
         await self.session.commit()
         row = row.first()
         if not row:
-            raise HTTPException(status_code=404, detail="submenu not found")
+            raise HTTPException(status_code=404, detail='submenu not found')
         # TODO: try to make it in one query
         query = select(dish).where(dish.c.submenu_id == submenu_id)
         dishes_count = len((await self.session.execute(query)).all())

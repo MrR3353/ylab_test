@@ -1,5 +1,5 @@
-from typing import List
 from fastapi import Depends
+
 from api.models import menu
 from api.redis_cache import RedisCache, cached
 from api.repositories.menu import MenuRepository
@@ -11,7 +11,7 @@ class MenuService:
         self.db_repo = db_repo
         self.cache = RedisCache()
 
-    async def get_all(self) -> List[menu]:
+    async def get_all(self) -> list[menu]:
         @cached(key='m:')
         async def wrapper():
             result = await self.db_repo.get_all()
@@ -34,7 +34,7 @@ class MenuService:
     async def update(self, menu_id: int, data: MenuRequest) -> menu:
         result = await self.db_repo.update(menu_id, data)
         await self.cache.delete('m:')
-        await self.cache.set(f"m:{menu_id}:", result)
+        await self.cache.set(f'm:{menu_id}:', result)
         return result
 
     async def delete(self, menu_id: int) -> None:

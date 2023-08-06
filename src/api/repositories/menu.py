@@ -1,21 +1,18 @@
-from typing import List
-
 from fastapi import Depends, HTTPException
-from sqlalchemy import select, distinct, text, insert, update, delete
+from sqlalchemy import delete, distinct, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.functions import count, func
+from sqlalchemy.sql.functions import count
 
-from api.models import menu, submenu, dish
-from database import get_async_session
-
+from api.models import dish, menu, submenu
 from api.schemas import MenuRequest
+from database import get_async_session
 
 
 class MenuRepository:
     def __init__(self, session: AsyncSession = Depends(get_async_session)):
         self.session = session
 
-    async def get_all(self) -> List[menu]:
+    async def get_all(self) -> list[menu]:
         query = select(menu, count(distinct(submenu.c.id)).label('submenus_count'),
                        count(dish.c.id).label('dishes_count'))\
             .join(submenu, submenu.c.menu_id == menu.c.id, isouter=True)\
@@ -34,7 +31,7 @@ class MenuRepository:
         row = await self.session.execute(query)
         row = row.first()
         if not row:
-            raise HTTPException(status_code=404, detail="menu not found")
+            raise HTTPException(status_code=404, detail='menu not found')
         return row
 
     async def create(self, data: MenuRequest) -> menu:
@@ -49,7 +46,7 @@ class MenuRepository:
         await self.session.commit()
         row = row.first()
         if not row:
-            raise HTTPException(status_code=404, detail="menu not found")
+            raise HTTPException(status_code=404, detail='menu not found')
         # TODO: try to make it in one query
         query = select(menu, count(distinct(submenu.c.id)).label('submenus_count'),
                        count(dish.c.id).label('dishes_count'))\

@@ -1,5 +1,5 @@
-from typing import List
 from fastapi import APIRouter, Depends
+
 from api.schemas import SubmenuRequest, SubmenuResponse
 from api.services.submenu import SubmenuService
 
@@ -7,7 +7,7 @@ router_submenu = APIRouter(prefix='/api/v1/menus/{menu_id}/submenus', tags=['Sub
 
 
 # TODO: maybe need to check menu_id for submenus???
-@router_submenu.get('/', response_model=List[SubmenuResponse])
+@router_submenu.get('/', response_model=list[SubmenuResponse])
 async def get_all_submenu(menu_id: int, service: SubmenuService = Depends()):
     return await service.get_all(menu_id)
 

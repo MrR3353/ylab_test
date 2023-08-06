@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import Depends
 
 from api.models import submenu
@@ -13,7 +11,7 @@ class SubmenuService:
         self.db_repo = db_repo
         self.cache = RedisCache()
 
-    async def get_all(self, menu_id: int) -> List[submenu]:
+    async def get_all(self, menu_id: int) -> list[submenu]:
         @cached(key=f'm:{menu_id}:s:')
         async def wrapper():
             result = await self.db_repo.get_all(menu_id)
