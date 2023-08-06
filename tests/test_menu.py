@@ -57,7 +57,7 @@ async def test_delete_menu(ac: AsyncClient, count=2):
         get_all_response = get_all_response.json()
         get_all_response.remove(LAST_MENU)
 
-        response = await ac.delete('/api/v1/menus/{LAST_MENU["id"]}')
+        response = await ac.delete(f'/api/v1/menus/{LAST_MENU["id"]}')
         assert response.status_code == 200
         response = await ac.get('/api/v1/menus/')
         LAST_MENU = get_all_response[-1] if get_all_response else {}

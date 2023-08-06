@@ -20,5 +20,4 @@ async def clear_cache():
 
 # cd src && uvicorn main:app --reload
 # pytest -v -s tests/
-# pip freeze
 # redis in docker
