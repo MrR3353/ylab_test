@@ -5,6 +5,7 @@ from pickle import dumps, loads
 import asyncio
 
 CACHE_ON = None
+EXPIRE_TIME = 60*60
 
 
 def switch(func):
@@ -17,6 +18,21 @@ def switch(func):
     return wrapper
 
 
+def cached(key: str):
+    def inner(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            cache = await RedisCache().get(key)
+            if cache is not None:
+                return cache
+            else:
+                result = await func(*args, **kwargs)
+                await RedisCache().set(key, result)
+                return result
+        return wrapper
+    return inner
+
+
 class RedisCache:
     def __init__(self, cache_on=True):
         global CACHE_ON
@@ -26,7 +42,7 @@ class RedisCache:
     @switch
     async def set(self, key, value):
         value = dumps(value)
-        await self.connect.set(name=key, value=value)
+        await self.connect.set(name=key, value=value, ex=EXPIRE_TIME)
 
     @switch
     async def get(self, key):
@@ -42,4 +58,7 @@ class RedisCache:
             async for key in self.connect.scan_iter(key + '*'):
                 await self.connect.delete(key)
 
+    @switch
+    async def clear(self):
+        await self.delete('', is_pattern=True)
 
