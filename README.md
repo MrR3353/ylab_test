@@ -2,11 +2,10 @@
 
 Стек: Fastapi + asyncpg + PostgreSQL + Docker Compose
 
-### **Запуск проекта:**  
+### **Запуск проекта:**
 
-Приложение + БД:  
+Приложение + БД:
 `docker compose up --build`
 
-Тесты (запускать после приложения с БД):  
+Тесты (запускать после приложения с БД):
 `docker compose -f docker-compose-test.yml up --build`
-

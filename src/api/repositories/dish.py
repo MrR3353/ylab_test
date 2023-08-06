@@ -1,22 +1,18 @@
-from typing import List
-
 import sqlalchemy
 from fastapi import Depends, HTTPException
-from sqlalchemy import select, distinct, text, insert, update, delete
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.functions import count, func
 
-from api.models import menu, submenu, dish
-from database import get_async_session
-
+from api.models import dish
 from api.schemas import DishRequest
+from database import get_async_session
 
 
 class DishRepository:
     def __init__(self, session: AsyncSession = Depends(get_async_session)):
         self.session = session
 
-    async def get_all(self, submenu_id: int) -> List[dish]:
+    async def get_all(self, submenu_id: int) -> list[dish]:
         query = select(dish).where(dish.c.submenu_id == submenu_id)
         rows = await self.session.execute(query)
         return rows.all()
@@ -26,7 +22,7 @@ class DishRepository:
         row = await self.session.execute(query)
         row = row.first()
         if not row:
-            raise HTTPException(status_code=404, detail="dish not found")
+            raise HTTPException(status_code=404, detail='dish not found')
         return row
 
     async def create(self, submenu_id: int, data: DishRequest) -> dish:
@@ -40,7 +36,7 @@ class DishRepository:
             await self.session.commit()
             return row.first()
         except sqlalchemy.exc.IntegrityError:  # ForeignKeyViolationError
-            raise HTTPException(status_code=400, detail="submenu not found")
+            raise HTTPException(status_code=400, detail='submenu not found')
         except Exception as e:
             print(e)
 
@@ -53,7 +49,7 @@ class DishRepository:
         await self.session.commit()
         row = row.first()
         if not row:
-            raise HTTPException(status_code=404, detail="dish not found")
+            raise HTTPException(status_code=404, detail='dish not found')
         return row
 
     async def delete(self, dish_id: int) -> None:

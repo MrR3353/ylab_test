@@ -54,4 +54,3 @@ FROM submenu
 LEFT JOIN dish ON(submenu.id = dish.submenu_id)
 WHERE submenu.id = 6
 GROUP BY submenu.id
-

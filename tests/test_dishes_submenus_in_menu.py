@@ -1,5 +1,7 @@
+import test_dish
+import test_menu
+import test_submenu
 from httpx import AsyncClient
-import test_menu, test_submenu, test_dish
 
 
 async def test_add_menu_submenu_dishes(ac: AsyncClient):
@@ -52,6 +54,6 @@ async def test_delete_menu(ac: AsyncClient):
 
 
 async def test_get_all_menu(ac: AsyncClient):
-    response = await ac.get(f'/api/v1/menus/')
+    response = await ac.get('/api/v1/menus/')
     assert response.json() == []
     assert response.status_code == 200

@@ -1,5 +1,5 @@
-from typing import List
 from fastapi import APIRouter, Depends
+
 from api.schemas import DishRequest, DishResponse
 from api.services.dish import DishService
 
@@ -7,7 +7,7 @@ router_dish = APIRouter(prefix='/api/v1/menus/{menu_id}/submenus/{submenu_id}/di
 
 
 # TODO: maybe need to check menu_id, submenu_id for dishes???
-@router_dish.get('/', response_model=List[DishResponse])
+@router_dish.get('/', response_model=list[DishResponse])
 async def get_all_dishes(menu_id: int, submenu_id: int, service: DishService = Depends()):
     return await service.get_all(menu_id, submenu_id)
 

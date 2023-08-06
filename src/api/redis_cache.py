@@ -1,11 +1,11 @@
+import asyncio
 import functools
+from pickle import dumps, loads
 
 import redis.asyncio as redis
-from pickle import dumps, loads
-import asyncio
 
 CACHE_ON = None
-EXPIRE_TIME = 60*60
+EXPIRE_TIME = 60 * 60
 
 
 def switch(func):
@@ -61,4 +61,3 @@ class RedisCache:
     @switch
     async def clear(self):
         await self.delete('', is_pattern=True)
-

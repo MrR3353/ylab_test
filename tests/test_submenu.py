@@ -1,5 +1,5 @@
-from httpx import AsyncClient
 import test_menu
+from httpx import AsyncClient
 
 LAST_SUBMENU = {}
 
@@ -11,8 +11,8 @@ async def test_add_menu(ac: AsyncClient):
 async def test_add_submenu(ac: AsyncClient):
     global LAST_SUBMENU
     new_submenu = {
-        "title": "Submenu title 1",
-        "description": "Submenu description 1"
+        'title': 'Submenu title 1',
+        'description': 'Submenu description 1'
     }
     response = await ac.post(f'/api/v1/menus/{test_menu.LAST_MENU["id"]}/submenus/', json=new_submenu)
     LAST_SUBMENU = response.json()
@@ -31,8 +31,8 @@ async def test_get_submenu(ac: AsyncClient):
 async def test_update_submenu(ac: AsyncClient):
     global LAST_SUBMENU
     new_submenu = {
-        "title": "Updated submenu title 1",
-        "description": "Updated submenu description 1"
+        'title': 'Updated submenu title 1',
+        'description': 'Updated submenu description 1'
     }
     response = await ac.patch(f'/api/v1/menus/{test_menu.LAST_MENU["id"]}/submenus/{LAST_SUBMENU["id"]}', json=new_submenu)
     LAST_SUBMENU = response.json()

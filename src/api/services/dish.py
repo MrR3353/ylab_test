@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import Depends
 
 from api.models import dish
@@ -13,7 +11,7 @@ class DishService:
         self.db_repo = db_repo
         self.cache = RedisCache()
 
-    async def get_all(self, menu_id: int, submenu_id: int) -> List[dish]:
+    async def get_all(self, menu_id: int, submenu_id: int) -> list[dish]:
         @cached(key=f'm:{menu_id}:s:{submenu_id}:d:')
         async def wrapper():
             result = await self.db_repo.get_all(submenu_id)

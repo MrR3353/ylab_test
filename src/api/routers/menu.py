@@ -1,12 +1,12 @@
-from typing import List
 from fastapi import APIRouter, Depends
+
 from api.schemas import MenuRequest, MenuResponse
 from api.services.menu import MenuService
 
 router_menu = APIRouter(prefix='/api/v1/menus', tags=['Menu'])
 
 
-@router_menu.get('/', response_model=List[MenuResponse])
+@router_menu.get('/', response_model=list[MenuResponse])
 async def get_all_menu(service: MenuService = Depends()):
     return await service.get_all()
 
