@@ -12,14 +12,14 @@ from database import get_async_session
 from api.schemas import SubmenuRequest, SubmenuResponse
 
 
-
 class SubmenuRepository:
     def __init__(self, session: AsyncSession = Depends(get_async_session)):
         self.session = session
 
-    async def get_all(self) -> List[submenu]:
+    async def get_all(self, menu_id: int) -> List[submenu]:
         query = select(submenu, count(dish.c.id).label('dishes_count'))\
-            .join(dish, dish.c.submenu_id == submenu.c.id, isouter=True).group_by(submenu.c.id)
+            .join(dish, dish.c.submenu_id == submenu.c.id, isouter=True).group_by(submenu.c.id)\
+            .where(submenu.c.menu_id == menu_id)
         rows = await self.session.execute(query)
         return rows.all()
 
