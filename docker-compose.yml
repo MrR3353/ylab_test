@@ -22,6 +22,21 @@ services:
       retries: 5
       start_period: 80s
 
+  redis:
+    container_name: redis_ylab
+    image: redis:latest
+    restart: unless-stopped
+    networks:
+      - ylab_network
+    volumes:
+      - ./redis/data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    expose:
+      - 6379
+    command: redis-server /usr/local/etc/redis/redis.conf
+
 
   fastapi_ylab:
     container_name: fastapi_ylab
@@ -40,6 +55,8 @@ services:
     depends_on:
       postgres_ylab:
         condition: service_healthy
+      redis:
+        condition: service_started
 
 
 networks:

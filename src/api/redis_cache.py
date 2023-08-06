@@ -36,7 +36,7 @@ def cached(key: str):
 
 class RedisCache:
     def __init__(self):
-        self.connect = redis.Redis()
+        self.connect = redis.Redis(host='redis', port=6379)
 
     @switch
     async def set(self, key, value):
