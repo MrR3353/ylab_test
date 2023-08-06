@@ -4,7 +4,8 @@ from pickle import dumps, loads
 
 import redis.asyncio as redis
 
-CACHE_ON = None
+from config import CACHE_ON
+
 EXPIRE_TIME = 60 * 60
 
 
@@ -34,9 +35,7 @@ def cached(key: str):
 
 
 class RedisCache:
-    def __init__(self, cache_on=True):
-        global CACHE_ON
-        CACHE_ON = cache_on
+    def __init__(self):
         self.connect = redis.Redis()
 
     @switch
