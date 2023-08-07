@@ -4,22 +4,22 @@ from pickle import dumps, loads
 
 import redis.asyncio as redis
 
-from config import CACHE_ON
+from config import CACHE_ENABLE, RUN_ON_DOCKER
 
 EXPIRE_TIME = 60 * 60
 
 
-def switch(func):
+def switch(func):   # for enable/disable cache methods
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        if CACHE_ON:
+        if CACHE_ENABLE:
             return func(*args, **kwargs)
         else:
             return asyncio.sleep(0)  # for await
     return wrapper
 
 
-def cached(key: str):
+def cached(key: str):   # caching get responses, getting or setting key
     def inner(func):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
@@ -36,7 +36,8 @@ def cached(key: str):
 
 class RedisCache:
     def __init__(self):
-        self.connect = redis.Redis(host='redis', port=6379)
+        host = 'redis' if RUN_ON_DOCKER else '127.0.0.1'    # docker/localhost hosts
+        self.connect = redis.Redis(host=host, port=6379)
 
     @switch
     async def set(self, key, value):
