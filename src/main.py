@@ -21,4 +21,3 @@ if CACHE_ENABLE:
 
 # cd src && uvicorn main:app --reload
 # pytest -v -s tests/
-# redis in docker
