@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from api.schemas import MenuRequest, MenuResponse
+from api.schemas import MenuDetailsResponse, MenuRequest, MenuResponse
 from api.services.menu import MenuService
 
 router_menu = APIRouter(prefix='/api/v1/menus', tags=['Menu'])
@@ -9,6 +9,11 @@ router_menu = APIRouter(prefix='/api/v1/menus', tags=['Menu'])
 @router_menu.get('/', response_model=list[MenuResponse], summary='Возвращает список всех меню')
 async def get_all(service: MenuService = Depends()):
     return await service.get_all()
+
+
+@router_menu.get('/details', response_model=list[MenuDetailsResponse], summary='Возвращает список всех меню со всеми связанными подменю и блюдами')
+async def get_all_with_submenu_dishes(service: MenuService = Depends()):
+    return await service.get_all_with_submenu_dishes()
 
 
 @router_menu.get('/{menu_id}', response_model=MenuResponse, summary='Возвращает меню по id')

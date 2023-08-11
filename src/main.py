@@ -19,5 +19,9 @@ if CACHE_ENABLE:
         cache = RedisCache()
         await cache.clear()
 
+# Для запуска без Docker:
+# В config.py установить RUN_ON_DOCKER = False
+# Запустить сервер redis перед запуском
+# В папке проекта:
 # cd src && uvicorn main:app --reload
 # pytest -v -s tests/

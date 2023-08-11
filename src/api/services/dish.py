@@ -5,6 +5,15 @@ from api.redis_cache import RedisCache, cached
 from api.repositories.dish import DishRepository
 from api.schemas import DishRequest
 
+'''
+DISH:
+get_all_dish - cache(get_all_dish)
+get_dish - cache(get_dish)
+add_dish - cache(get_dish) + invalidation(get_all_dish, MENU, SUBMENU)
+update_dish - cache(get_dish) + invalidation(get_all_dish)
+delete_dish - invalidation(get_all_dish, get_dish, MENU, SUBMENU)
+'''
+
 
 class DishService:
     def __init__(self, db_repo: DishRepository = Depends()):

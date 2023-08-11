@@ -3,7 +3,16 @@ from fastapi import Depends
 from api.models import menu
 from api.redis_cache import RedisCache, cached
 from api.repositories.menu import MenuRepository
-from api.schemas import MenuRequest
+from api.schemas import MenuDetailsResponse, MenuRequest
+
+'''
+MENU:
+get_all_menu  - cache(get_all_menu)
+get_menu - cache(get_menu)
+add_menu - cache(get_menu) + invalidation (get_all_menu)
+update_menu - cache(get_menu) + invalidation (get_all_menu)
+delete_menu - invalidation (get_all_menu, get_menu, SUBMENU, DISH)
+'''
 
 
 class MenuService:
@@ -46,4 +55,8 @@ class MenuService:
     async def delete_all(self) -> None:
         result = await self.db_repo.delete_all()
         await self.cache.delete('m:', is_pattern=True)  # cascade deleting
+        return result
+
+    async def get_all_with_submenu_dishes(self) -> list[MenuDetailsResponse]:
+        result = await self.db_repo.get_all_with_submenu_dishes()
         return result

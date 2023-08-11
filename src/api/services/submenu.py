@@ -5,6 +5,15 @@ from api.redis_cache import RedisCache, cached
 from api.repositories.submenu import SubmenuRepository
 from api.schemas import SubmenuRequest
 
+'''
+SUBMENU:
+get_all_submenu  - cache(get_all_submenu)
+get_submenu - cache(get_submenu)
+add_submenu - cache(get_submenu) + invalidation (get_all_submenu, MENU, get_all_submenu)
+update_submenu - cache(get_submenu) + invalidation (get_all_submenu)
+delete_submenu - invalidation (get_all_submenu, get_submenu, MENU, DISH)
+'''
+
 
 class SubmenuService:
     def __init__(self, db_repo: SubmenuRepository = Depends()):

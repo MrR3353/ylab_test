@@ -43,3 +43,24 @@ class DishRequest(MenuRequest):
 class DishResponse(DishRequest):
     id: IntToStr
     price: str
+
+
+class DishDetailsResponse(BaseModel):
+    id: IntToStr
+    title: str
+    description: str
+    price: str
+
+
+class SubmenuDetailsResponse(BaseModel):
+    id: IntToStr
+    title: str
+    description: str
+    dishes: list[DishDetailsResponse]
+
+
+class MenuDetailsResponse(BaseModel):
+    id: IntToStr
+    title: str
+    description: str
+    submenus: list[SubmenuDetailsResponse]
