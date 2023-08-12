@@ -9,13 +9,14 @@ from config import CACHE_ENABLE, RUN_ON_DOCKER
 EXPIRE_TIME = 60 * 60
 
 
-def switch(func):   # for enable/disable cache methods
+def switch(func):  # for enable/disable cache methods
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if CACHE_ENABLE:
             return func(*args, **kwargs)
         else:
             return asyncio.sleep(0)  # for await
+
     return wrapper
 
 
@@ -36,23 +37,23 @@ def cached(key: str):   # caching get responses, getting or setting key
 
 class RedisCache:
     def __init__(self):
-        host = 'redis' if RUN_ON_DOCKER else '127.0.0.1'    # docker/localhost hosts
+        host = 'redis' if RUN_ON_DOCKER else '127.0.0.1'  # docker/localhost hosts
         self.connect = redis.Redis(host=host, port=6379)
 
     @switch
-    async def set(self, key, value):
+    async def set(self, key: str, value):
         value = dumps(value)
         await self.connect.set(name=key, value=value, ex=EXPIRE_TIME)
 
     @switch
-    async def get(self, key):
+    async def get(self, key: str):
         value = await self.connect.get(name=key)
         if value is not None:
             value = loads(value)
         return value
 
     @switch
-    async def delete(self, key, is_pattern=False):
+    async def delete(self, key: str, is_pattern=False):
         await self.connect.delete(key)
         if is_pattern:
             async for key in self.connect.scan_iter(key + '*'):
