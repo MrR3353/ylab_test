@@ -28,3 +28,4 @@ archive.zip
 .cache
 
 test.py
+/redis/start_redis.bat

@@ -4,16 +4,14 @@ from pickle import dumps, loads
 
 import redis.asyncio as redis
 
-from config import CACHE_ENABLE, RUN_ON_DOCKER
-
-EXPIRE_TIME = 60 * 60
+from config import CACHE_ENABLE, CACHE_EXPIRE_TIME, RUN_ON_DOCKER
 
 
 def switch(func):  # for enable/disable cache methods
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs):
         if CACHE_ENABLE:
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
         else:
             return asyncio.sleep(0)  # for await
 
@@ -43,7 +41,7 @@ class RedisCache:
     @switch
     async def set(self, key: str, value):
         value = dumps(value)
-        await self.connect.set(name=key, value=value, ex=EXPIRE_TIME)
+        await self.connect.set(name=key, value=value, ex=CACHE_EXPIRE_TIME)
 
     @switch
     async def get(self, key: str):

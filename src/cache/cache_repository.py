@@ -1,7 +1,7 @@
 import functools
 from enum import Enum
 
-from api.redis_cache import RedisCache, switch
+from cache.redis_cache import RedisCache, switch
 
 
 class CacheEntity(Enum):

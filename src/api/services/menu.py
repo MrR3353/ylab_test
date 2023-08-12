@@ -1,10 +1,10 @@
-from fastapi import Depends
+from fastapi import BackgroundTasks, Depends
 
-from api.cache_repository import CacheEntity as ce
-from api.cache_repository import CacheRepository, cached
 from api.models import menu
 from api.repositories.menu import MenuRepository
 from api.schemas import MenuDetailsResponse, MenuRequest
+from cache.cache_repository import CacheEntity as ce
+from cache.cache_repository import CacheRepository, cached
 
 '''
 MENU:
@@ -35,26 +35,26 @@ class MenuService:
             return result
         return await wrapper()
 
-    async def create(self, data: MenuRequest) -> menu:
+    async def create(self, data: MenuRequest, background_tasks: BackgroundTasks) -> menu:
         result = await self.db_repo.create(data)
-        await self.cache.delete(ce.menu_list)
-        await self.cache.set(ce.menu, result, menu_id=result.id)
+        background_tasks.add_task(self.cache.delete, ce.menu_list)
+        background_tasks.add_task(self.cache.set, ce.menu, result, menu_id=result.id)
         return result
 
-    async def update(self, menu_id: int, data: MenuRequest) -> menu:
+    async def update(self, menu_id: int, data: MenuRequest, background_tasks: BackgroundTasks) -> menu:
         result = await self.db_repo.update(menu_id, data)
-        await self.cache.delete(ce.menu_list, ce.menu, menu_id=menu_id)
-        await self.cache.set(ce.menu, result, menu_id=menu_id)
+        background_tasks.add_task(self.cache.delete, ce.menu_list, ce.menu, menu_id=menu_id)
+        background_tasks.add_task(self.cache.set, ce.menu, result, menu_id=menu_id)
         return result
 
-    async def delete(self, menu_id: int) -> None:
+    async def delete(self, menu_id: int, background_tasks: BackgroundTasks) -> None:
         result = await self.db_repo.delete(menu_id)
-        await self.cache.delete(ce.menu_list, ce.menu_cascade, menu_id=menu_id)
+        background_tasks.add_task(self.cache.delete, ce.menu_list, ce.menu_cascade, menu_id=menu_id)
         return result
 
-    async def delete_all(self) -> None:
+    async def delete_all(self, background_tasks: BackgroundTasks) -> None:
         result = await self.db_repo.delete_all()
-        await self.cache.delete(ce.all)
+        background_tasks.add_task(self.cache.delete, ce.all)
         return result
 
     async def get_all_with_submenu_dishes(self) -> list[MenuDetailsResponse]:

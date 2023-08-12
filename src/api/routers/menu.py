@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 
 from api.schemas import MenuDetailsResponse, MenuRequest, MenuResponse
 from api.services.menu import MenuService
@@ -22,20 +22,20 @@ async def get(menu_id: int, service: MenuService = Depends()):
 
 
 @router_menu.post('/', status_code=201, response_model=MenuResponse, summary='Добавляет новое меню')
-async def create(data: MenuRequest, service: MenuService = Depends()):
-    return await service.create(data)
+async def create(data: MenuRequest, background_tasks: BackgroundTasks, service: MenuService = Depends()):
+    return await service.create(data, background_tasks)
 
 
 @router_menu.patch('/{menu_id}', response_model=MenuResponse, summary='Обновляет меню по id')
-async def update(menu_id: int, data: MenuRequest, service: MenuService = Depends()):
-    return await service.update(menu_id, data)
+async def update(menu_id: int, data: MenuRequest, background_tasks: BackgroundTasks, service: MenuService = Depends()):
+    return await service.update(menu_id, data, background_tasks)
 
 
 @router_menu.delete('/{menu_id}', summary='Удаляет меню по id')
-async def delete(menu_id: int, service: MenuService = Depends()):
-    return await service.delete(menu_id)
+async def delete(menu_id: int, background_tasks: BackgroundTasks, service: MenuService = Depends()):
+    return await service.delete(menu_id, background_tasks)
 
 
 @router_menu.delete('/', summary='Удаляет все меню')
-async def delete_all(service: MenuService = Depends()):
-    return await service.delete_all()
+async def delete_all(background_tasks: BackgroundTasks, service: MenuService = Depends()):
+    return await service.delete_all(background_tasks)
