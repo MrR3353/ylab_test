@@ -16,15 +16,15 @@ FILE_PATH = os.path.join(get_project_root(), 'admin', FILENAME)
 
 
 async def ac() -> AsyncGenerator[AsyncClient, None]:
-    async with AsyncClient(app=app, base_url='http://test') as ac:
-        yield ac
+    async with AsyncClient(app=app, base_url='http://test') as client:
+        yield client
 
 
 def async_client(func):
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         client = await ac().__anext__()
-        return await func(client, *args, **kwargs)
+        return await func(*args, client, **kwargs)
     return wrapper
 
 
@@ -151,56 +151,56 @@ async def get_full_menu(client: AsyncClient) -> list[MenuDetailsResponse]:
 
 
 @async_client
-async def add_menu(menu, ac: AsyncClient):
-    response = await ac.post('/api/v1/menus/', json=menu)
+async def add_menu(menu, client: AsyncClient):
+    response = await client.post('/api/v1/menus/', json=menu)
     return response.json()
 
 
 @async_client
-async def update_menu(menu_id, data, ac: AsyncClient):
-    response = await ac.patch(f'/api/v1/menus/{menu_id}', json=data)
+async def update_menu(menu_id, data, client: AsyncClient):
+    response = await client.patch(f'/api/v1/menus/{menu_id}', json=data)
     return response.json()
 
 
 @async_client
-async def delete_menu(menu_id, ac: AsyncClient):
-    response = await ac.delete(f'/api/v1/menus/{menu_id}')
+async def delete_menu(menu_id, client: AsyncClient):
+    response = await client.delete(f'/api/v1/menus/{menu_id}')
     return response.json()
 
 
 @async_client
-async def add_submenu(menu_id, submenu, ac: AsyncClient):
-    response = await ac.post(f'/api/v1/menus/{menu_id}/submenus/', json=submenu)
+async def add_submenu(menu_id, submenu, client: AsyncClient):
+    response = await client.post(f'/api/v1/menus/{menu_id}/submenus/', json=submenu)
     return response.json()
 
 
 @async_client
-async def update_submenu(menu_id, submenu_id, data, ac: AsyncClient):
-    response = await ac.patch(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}', json=data)
+async def update_submenu(menu_id, submenu_id, data, client: AsyncClient):
+    response = await client.patch(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}', json=data)
     return response.json()
 
 
 @async_client
-async def delete_submenu(menu_id, submenu_id, ac: AsyncClient):
-    response = await ac.delete(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}')
+async def delete_submenu(menu_id, submenu_id, client: AsyncClient):
+    response = await client.delete(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}')
     return response.json()
 
 
 @async_client
-async def add_dish(menu_id, submenu_id, dish, ac: AsyncClient):
-    response = await ac.post(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/', json=dish)
+async def add_dish(menu_id, submenu_id, dish, client: AsyncClient):
+    response = await client.post(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/', json=dish)
     return response.json()
 
 
 @async_client
-async def update_dish(menu_id, submenu_id, dish_id, data, ac: AsyncClient):
-    response = await ac.patch(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}', json=data)
+async def update_dish(menu_id, submenu_id, dish_id, data, client: AsyncClient):
+    response = await client.patch(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}', json=data)
     return response.json()
 
 
 @async_client
-async def delete_dish(menu_id, submenu_id, dish_id, ac: AsyncClient):
-    response = await ac.delete(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}')
+async def delete_dish(menu_id, submenu_id, dish_id, client: AsyncClient):
+    response = await client.delete(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}')
     return response.json()
 
 
@@ -299,8 +299,6 @@ async def add_update_records(full_menu_db, full_menu_excel):
 
 
 async def update_db_from_admin_async():
-    print('UPDATE!')
-    # await asyncio.sleep(0)
     full_menu_db = await get_full_menu()
     full_menu_excel = get_excel_menu()
 
@@ -312,7 +310,8 @@ async def update_db_from_admin_async():
 
 @celery.task
 def update_db_from_admin():
-    asyncio.run(update_db_from_admin_async())
+    loop = asyncio.get_event_loop()
+    return loop.run_until_complete(update_db_from_admin_async())
 
 
 # update_db_from_admin()
