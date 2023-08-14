@@ -24,3 +24,7 @@ if CACHE_ENABLE:
 # В папке проекта:
 # cd src && uvicorn main:app --reload
 # pytest -v -s tests/
+
+# cd src
+# celery -A tasks.update_admin:celery beat --loglevel=INFO
+# celery -A tasks.update_admin:celery worker --loglevel=INFO --pool=solo

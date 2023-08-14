@@ -35,7 +35,7 @@ def cached(key: str):   # caching get responses, getting or setting key
 
 class RedisCache:
     def __init__(self):
-        host = 'redis' if RUN_ON_DOCKER else '127.0.0.1'  # docker/localhost hosts
+        host = 'redis' if RUN_ON_DOCKER else 'localhost'  # docker/localhost hosts
         self.connect = redis.Redis(host=host, port=6379)
 
     @switch

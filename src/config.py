@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -19,3 +20,7 @@ DB_PASS_TEST = os.environ.get('DB_PASS_TEST')
 RUN_ON_DOCKER = True    # runs on docker or localhost
 CACHE_ENABLE = True
 CACHE_EXPIRE_TIME = 60 * 60
+
+
+def get_project_root() -> Path:
+    return Path(__file__).parent.parent
