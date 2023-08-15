@@ -26,9 +26,8 @@ if CACHE_ENABLE:
 # pytest -v -s tests/
 
 # Запуск celery:
-# cd src
-# celery -A tasks.update_admin:celery worker --loglevel=INFO --pool=solo
-# celery -A tasks.update_admin:celery beat --loglevel=INFO
+# cd src && celery -A tasks.update_admin:celery worker --loglevel=INFO --pool=solo
+# cd src && celery -A tasks.update_admin:celery beat --loglevel=INFO
 
 # Запуск в Docker:
 # Приложение + БД:

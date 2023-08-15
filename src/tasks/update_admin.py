@@ -10,7 +10,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from api.models import metadata
-from api.schemas import DishRequest, MenuDetailsResponse, MenuRequest, SubmenuRequest
+from api.schemas import (
+    DishRequest,
+    DishResponse,
+    MenuDetailsResponse,
+    MenuRequest,
+    MenuResponse,
+    SubmenuDetailsResponse,
+    SubmenuRequest,
+    SubmenuResponse,
+)
 from config import DB_HOST, DB_NAME, DB_PASS, DB_PORT, DB_USER, get_project_root
 from database import get_async_session
 from main import app
@@ -47,7 +56,7 @@ def async_client(func):
     return wrapper
 
 
-def get_excel_menu():
+def get_excel_menu() -> list[MenuDetailsResponse]:
     '''
     Problem: submenus and dishes from xlsx file can have the same id.
 
@@ -98,7 +107,11 @@ def get_excel_menu():
     then delete them
     '''
 
-    workbook = openpyxl.load_workbook(FILE_PATH)
+    try:
+        workbook = openpyxl.load_workbook(FILE_PATH)
+    except FileNotFoundError as e:
+        print(e)
+        return []
     worksheet = workbook.active
 
     menus_list = []
@@ -130,12 +143,16 @@ def get_excel_menu():
     return menus_list
 
 
-def update_excel_menu(menus_list):
+def update_excel_menu(menus_list: list[MenuDetailsResponse]) -> None:
     '''
     Updates xlsx file with new id's from db
     Walk through file and rewrite corresponding id from menus list
     '''
-    workbook = openpyxl.load_workbook(FILE_PATH)
+    try:
+        workbook = openpyxl.load_workbook(FILE_PATH)
+    except FileNotFoundError as e:
+        print(e)
+        return
     worksheet = workbook.active
 
     menu_index = -1
@@ -170,76 +187,77 @@ async def get_full_menu(client: AsyncClient) -> list[MenuDetailsResponse]:
 
 
 @async_client
-async def add_menu(menu, client: AsyncClient):
+async def add_menu(menu: dict, client: AsyncClient) -> MenuResponse:
     response = await client.post('/api/v1/menus/', json=menu)
     return response.json()
 
 
 @async_client
-async def update_menu(menu_id, data, client: AsyncClient):
+async def update_menu(menu_id: int, data: dict, client: AsyncClient) -> MenuResponse:
     response = await client.patch(f'/api/v1/menus/{menu_id}', json=data)
     return response.json()
 
 
 @async_client
-async def delete_menu(menu_id, client: AsyncClient):
+async def delete_menu(menu_id: int, client: AsyncClient) -> None:
     response = await client.delete(f'/api/v1/menus/{menu_id}')
     return response.json()
 
 
 @async_client
-async def add_submenu(menu_id, submenu, client: AsyncClient):
+async def add_submenu(menu_id: int, submenu: dict, client: AsyncClient) -> SubmenuResponse:
     response = await client.post(f'/api/v1/menus/{menu_id}/submenus/', json=submenu)
     return response.json()
 
 
 @async_client
-async def update_submenu(menu_id, submenu_id, data, client: AsyncClient):
+async def update_submenu(menu_id: int, submenu_id: int, data: dict, client: AsyncClient) -> SubmenuResponse:
     response = await client.patch(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}', json=data)
     return response.json()
 
 
 @async_client
-async def delete_submenu(menu_id, submenu_id, client: AsyncClient):
+async def delete_submenu(menu_id: int, submenu_id: int, client: AsyncClient) -> None:
     response = await client.delete(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}')
     return response.json()
 
 
 @async_client
-async def add_dish(menu_id, submenu_id, dish, client: AsyncClient):
+async def add_dish(menu_id: int, submenu_id: int, dish: dict, client: AsyncClient) -> DishResponse:
     response = await client.post(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/', json=dish)
     return response.json()
 
 
 @async_client
-async def update_dish(menu_id, submenu_id, dish_id, data, client: AsyncClient):
+async def update_dish(menu_id: int, submenu_id: int, dish_id: int, data: dict, client: AsyncClient) -> DishResponse:
     response = await client.patch(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}', json=data)
     return response.json()
 
 
 @async_client
-async def delete_dish(menu_id, submenu_id, dish_id, client: AsyncClient):
+async def delete_dish(menu_id: int, submenu_id: int, dish_id: int, client: AsyncClient) -> None:
     response = await client.delete(f'/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}')
     return response.json()
 
 
-async def remove_extra_records(full_menu_db, full_menu_excel):
+async def remove_extra_records(full_menu_db: list[MenuDetailsResponse], full_menu_excel: list[MenuDetailsResponse]) -> None:
     # delete all extra menus/submenus/dishes from db, which not in xls file
     for menu_db in full_menu_db:
         # search menu in xls that equals menu_db by id
-        similar_menu_xls = list(filter(lambda menu_xls: menu_xls['id'] == menu_db['id'], full_menu_excel))
-        if not similar_menu_xls:  # delete menu from db if its id not in xls file
+        similar_menu_xls_lst: list[MenuDetailsResponse] = list(
+            filter(lambda menu_xls: menu_xls['id'] == menu_db['id'], full_menu_excel))
+        if not similar_menu_xls_lst:  # delete menu from db if its id not in xls file
             await delete_menu(menu_db['id'])
         else:
-            similar_menu_xls = similar_menu_xls[0]
+            similar_menu_xls: MenuDetailsResponse = similar_menu_xls_lst[0]
             for submenu_db in menu_db['submenus']:
                 # search submenu in xls that equals submenu_db by id
-                similar_submenu_xls = list(
+                similar_submenu_xls_lst = list(
                     filter(lambda submenu_xls: submenu_xls['id'] == submenu_db['id'], similar_menu_xls['submenus']))
-                if not similar_submenu_xls:  # delete submenu from db if its id not in xls file
+                if not similar_submenu_xls_lst:  # delete submenu from db if its id not in xls file
                     await delete_submenu(menu_db['id'], submenu_db['id'])
                 else:
-                    similar_submenu_xls = similar_submenu_xls[0]
+                    similar_submenu_xls: SubmenuDetailsResponse = similar_submenu_xls_lst[0]
                     for dish_db in submenu_db['dishes']:
                         # search dish in xls that equals dish_db by id
                         similar_dish_xls = list(filter(lambda dish_xls: dish_xls['id'] == dish_db['id'],
@@ -248,7 +266,7 @@ async def remove_extra_records(full_menu_db, full_menu_excel):
                             await delete_dish(menu_db['id'], submenu_db['id'], dish_db['id'])
 
 
-async def add_update_records(full_menu_db, full_menu_excel):
+async def add_update_records(full_menu_db: list[MenuDetailsResponse], full_menu_excel: list[MenuDetailsResponse]) -> None:
     async def create_menu():
         menu = MenuRequest(title=menu_xls['title'], description=menu_xls['description'])
         menu_xls['id'] = (await add_menu(menu.model_dump()))['id']
@@ -283,17 +301,17 @@ async def add_update_records(full_menu_db, full_menu_excel):
         if menu_xls not in full_menu_db:  # if this menu (with submenu, dishes) don't exist in db
             # search menu_db which have the same id as menu_xls
 
-            similar_menu_db = [menu_db for menu_db in full_menu_db if menu_db['id'] == menu_xls['id']]
-            if similar_menu_db:
-                similar_menu_db = similar_menu_db[0]
+            similar_menu_db_lst = [menu_db for menu_db in full_menu_db if menu_db['id'] == menu_xls['id']]
+            if similar_menu_db_lst:
+                similar_menu_db: MenuDetailsResponse = similar_menu_db_lst[0]
                 await update_menu_if_needed()
 
                 for submenu_xls in menu_xls['submenus']:  # adding/updating all submenus from excel to db
                     # search submenu_db which have the same id as submenu_xls
-                    similar_submenu_db = [submenu_db for submenu_db in similar_menu_db['submenus']
-                                          if submenu_db['id'] == submenu_xls['id']]
-                    if similar_submenu_db:
-                        similar_submenu_db = similar_submenu_db[0]
+                    similar_submenu_db_lst = [submenu_db for submenu_db in similar_menu_db['submenus']
+                                              if submenu_db['id'] == submenu_xls['id']]
+                    if similar_submenu_db_lst:
+                        similar_submenu_db: SubmenuDetailsResponse = similar_submenu_db_lst[0]
                         await update_submenu_if_needed()
 
                         for dish_xls in submenu_xls['dishes']:  # adding/updating dish in db
