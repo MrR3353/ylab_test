@@ -1,5 +1,7 @@
 FROM python:3.10-slim
 
+ENV RUN_ON_DOCKER Yes
+
 RUN mkdir /fastapi_ylab
 WORKDIR /fastapi_ylab
 

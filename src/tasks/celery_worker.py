@@ -2,7 +2,6 @@ from celery import Celery
 
 from config import RUN_ON_DOCKER
 
-# celery = Celery('tasks', broker='amqp://myuser:mypassword@localhost:5672/myvhost')
 celery = None
 
 if not RUN_ON_DOCKER:   # if running example without docker
@@ -22,7 +21,7 @@ else:   # running example with docker
     celery = Celery(
         'worker',
         backend='redis://redis:6379',
-        broker='amqp://rabbitmq:5672'
+        broker='amqp://guest:guest@rabbitmq:5672'
     )
 
 celery.conf.timezone = 'UTC'

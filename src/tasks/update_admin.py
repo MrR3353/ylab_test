@@ -5,14 +5,33 @@ from typing import AsyncGenerator
 
 import openpyxl
 from httpx import AsyncClient
+from sqlalchemy import NullPool
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 
+from api.models import metadata
 from api.schemas import DishRequest, MenuDetailsResponse, MenuRequest, SubmenuRequest
-from config import get_project_root
+from config import DB_HOST, DB_NAME, DB_PASS, DB_PORT, DB_USER, get_project_root
+from database import get_async_session
 from main import app
 from tasks.celery_worker import celery
 
 FILENAME = 'Menu.xlsx'
 FILE_PATH = os.path.join(get_project_root(), 'admin', FILENAME)
+
+# DATABASE  override for assigning new
+DATABASE_URL = f'postgresql+asyncpg://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+
+engine_test = create_async_engine(DATABASE_URL, poolclass=NullPool, echo=False)
+async_session_maker = sessionmaker(engine_test, class_=AsyncSession, expire_on_commit=False)
+metadata.bind = engine_test
+
+
+async def override_get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session_maker() as session:
+        yield session
+
+app.dependency_overrides[get_async_session] = override_get_async_session
 
 
 async def ac() -> AsyncGenerator[AsyncClient, None]:
@@ -311,7 +330,9 @@ async def update_db_from_admin_async():
 @celery.task
 def update_db_from_admin():
     loop = asyncio.get_event_loop()
-    return loop.run_until_complete(update_db_from_admin_async())
+    # loop = asyncio.get_event_loop_policy().new_event_loop()
+    loop.run_until_complete(update_db_from_admin_async())
+    # loop.close()
 
 
 # update_db_from_admin()

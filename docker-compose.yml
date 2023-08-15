@@ -37,7 +37,6 @@ services:
       - 6379
     command: redis-server /usr/local/etc/redis/redis.conf
 
-
   fastapi_ylab:
     container_name: fastapi_ylab
     build:
@@ -58,6 +57,51 @@ services:
       redis:
         condition: service_started
 
+  rabbitmq_ylab:
+    container_name: rabbitmq_ylab
+    image: rabbitmq:latest
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"
+    hostname: rabbitmq
+    networks:
+      - ylab_network
+    depends_on:
+      - redis
+
+  celery:
+    container_name: celery_ylab
+    build:
+      context: .
+    entrypoint: sh -c "cd src && celery -A tasks.update_admin:celery worker --loglevel=INFO --pool=solo"
+    networks:
+      - ylab_network
+    env_file:
+      - .env_prod
+    depends_on:
+      rabbitmq_ylab:
+          condition: service_started
+      fastapi_ylab:
+        condition: service_started
+
+  celery-beat:
+    container_name: celery-beat
+    build:
+      context: .
+    entrypoint: sh -c "cd src && celery -A tasks.update_admin:celery beat --loglevel=INFO"
+    networks:
+      - ylab_network
+    env_file:
+      - .env_prod
+    depends_on:
+      rabbitmq_ylab:
+        condition: service_started
+      fastapi_ylab:
+        condition: service_started
+      celery:
+        condition: service_started
 
 networks:
   ylab_network:

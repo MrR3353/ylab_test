@@ -6,13 +6,14 @@
 * PostgreSQL
 * Docker Compose
 * Redis
+* Celery + RabbitMQ
 
 ### **Запуск проекта:**
 
-Приложение + БД:
+Приложение, БД, Celery, Redis:
 `docker compose up --build`
 
 Тесты (запускать после приложения с БД):
 `docker compose -f docker-compose-test.yml up --build`
 
-Включить/отключить кеширование и изменить параметры для запуска на Docker/localhost можно в src/config.py
+Включить/отключить кеширование и можно в src/config.py

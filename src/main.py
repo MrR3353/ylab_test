@@ -18,13 +18,21 @@ if CACHE_ENABLE:
         cache = RedisCache()
         await cache.clear()
 
-# Для запуска без Docker:
-# В config.py установить RUN_ON_DOCKER = False
+# Запуск без Docker:
 # Запустить сервер redis перед запуском
 # В папке проекта:
 # cd src && uvicorn main:app --reload
+# Запуск тестов (запускать перед celery или в момент, когда celery ничего не выполняет):
 # pytest -v -s tests/
 
+# Запуск celery:
 # cd src
-# celery -A tasks.update_admin:celery beat --loglevel=INFO
 # celery -A tasks.update_admin:celery worker --loglevel=INFO --pool=solo
+# celery -A tasks.update_admin:celery beat --loglevel=INFO
+
+# Запуск в Docker:
+# Приложение + БД:
+# `docker compose up --build`
+#
+# Тесты (запускать после приложения с БД):
+# `docker compose -f docker-compose-test.yml up --build`

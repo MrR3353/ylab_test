@@ -17,7 +17,7 @@ DB_NAME_TEST = os.environ.get('DB_NAME_TEST')
 DB_USER_TEST = os.environ.get('DB_USER_TEST')
 DB_PASS_TEST = os.environ.get('DB_PASS_TEST')
 
-RUN_ON_DOCKER = True    # runs on docker or localhost
+RUN_ON_DOCKER = os.environ.get('RUN_ON_DOCKER', False)   # runs on docker or localhost
 CACHE_ENABLE = True
 CACHE_EXPIRE_TIME = 60 * 60
 
