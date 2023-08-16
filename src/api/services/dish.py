@@ -1,3 +1,5 @@
+from typing import Union
+
 from fastapi import BackgroundTasks, Depends
 
 from api.models import dish
@@ -58,7 +60,7 @@ class DishService:
                                   menu_id=menu_id, submenu_id=submenu_id, dish_id=dish_id)
         return result
 
-    async def apply_discount(self, dishes: dish | list[dish] | list[DishDetailsResponse]) -> list[dish]:
+    async def apply_discount(self, dishes: Union[dish, list[dish], list[DishDetailsResponse]]) -> list[dish]:  # type ignore
         '''
         Gets one or list of dishes, apply discount to each of them and returns
         '''
