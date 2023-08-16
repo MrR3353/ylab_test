@@ -20,6 +20,8 @@ DB_PASS_TEST = os.environ.get('DB_PASS_TEST')
 RUN_ON_DOCKER = os.environ.get('RUN_ON_DOCKER', False)   # runs on docker or localhost
 CACHE_ENABLE = True
 CACHE_EXPIRE_TIME = 60 * 60
+CELERY_ON = True
+CELERY_TASK_TIME = 15
 
 
 def get_project_root() -> Path:

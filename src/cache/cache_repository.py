@@ -14,6 +14,7 @@ class CacheEntity(Enum):
     dish_list = 'm:{menu_id}:s:{submenu_id}:d:'
     dish = 'm:{menu_id}:s:{submenu_id}:d:{dish_id}:'
     all = 'm:*'
+    discount = 'disc:{dish_id}:'
 
 
 # caching get responses, getting or setting key
@@ -38,7 +39,10 @@ class CacheRepository:
 
     @switch
     async def get(self, key: CacheEntity, menu_id: int | None = None, submenu_id: int | None = None, dish_id: int | None = None):
-        if key == CacheEntity.menu_list:
+        if key == CacheEntity.discount:
+            assert dish_id is not None
+            return await self.redis.get(f'disc:{dish_id}:')
+        elif key == CacheEntity.menu_list:
             return await self.redis.get('m:')
         else:
             assert menu_id is not None
@@ -58,7 +62,10 @@ class CacheRepository:
 
     @switch
     async def set(self, key: CacheEntity, value, menu_id: int | None = None, submenu_id: int | None = None, dish_id: int | None = None):
-        if key == CacheEntity.menu_list:
+        if key == CacheEntity.discount:
+            assert dish_id is not None
+            return await self.redis.set(f'disc:{dish_id}:', value)
+        elif key == CacheEntity.menu_list:
             await self.redis.set('m:', value)
         else:
             assert menu_id is not None
@@ -79,7 +86,12 @@ class CacheRepository:
     @switch
     async def delete(self, *args: CacheEntity, menu_id: int | None = None, submenu_id: int | None = None, dish_id: int | None = None):
         for arg in args:
-            if arg == CacheEntity.menu_list:
+            if arg == CacheEntity.discount:
+                if dish_id is None:
+                    await self.redis.delete('disc:', is_pattern=True)
+                else:
+                    await self.redis.delete(f'disc:{dish_id}:')
+            elif arg == CacheEntity.menu_list:
                 await self.redis.delete('m:')
             elif arg == CacheEntity.all:
                 await self.redis.delete('m:', is_pattern=True)

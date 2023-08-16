@@ -20,7 +20,18 @@ from api.schemas import (
     SubmenuRequest,
     SubmenuResponse,
 )
-from config import DB_HOST, DB_NAME, DB_PASS, DB_PORT, DB_USER, get_project_root
+from cache.cache_repository import CacheEntity as ce
+from cache.cache_repository import CacheRepository
+from config import (
+    CELERY_ON,
+    CELERY_TASK_TIME,
+    DB_HOST,
+    DB_NAME,
+    DB_PASS,
+    DB_PORT,
+    DB_USER,
+    get_project_root,
+)
 from database import get_async_session
 from main import app
 from tasks.celery_worker import celery
@@ -34,6 +45,8 @@ DATABASE_URL = f'postgresql+asyncpg://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{D
 engine_test = create_async_engine(DATABASE_URL, poolclass=NullPool, echo=False)
 async_session_maker = sessionmaker(engine_test, class_=AsyncSession, expire_on_commit=False)
 metadata.bind = engine_test
+
+cache = CacheRepository()
 
 
 async def override_get_async_session() -> AsyncGenerator[AsyncSession, None]:
@@ -178,6 +191,44 @@ def update_excel_menu(menus_list: list[MenuDetailsResponse]) -> None:
                     cell.value = menus_list[menu_index]['submenus'][submenu_index]['dishes'][dish_index]['id']
                     break
     workbook.save(FILE_PATH)
+
+
+async def cache_discounts() -> None:
+    '''
+    Caches discounts from xlsx file to redis. And invalidate cache for dish and dish list if discount changed
+    Don't store None or 0 discount
+    '''
+    try:
+        workbook = openpyxl.load_workbook(FILE_PATH)
+    except FileNotFoundError as e:
+        print(e)
+        return
+    worksheet = workbook.active
+
+    menu_id = None
+    submenu_id = None
+    dish_id = None
+    for row in range(1, worksheet.max_row + 1):
+        for col in range(1, worksheet.max_column + 1):
+            cell = worksheet.cell(row=row, column=col)
+            if cell.value is not None:
+                if col == 1:    # menu
+                    menu_id = cell.value
+                    break
+                elif col == 2:  # submenu
+                    submenu_id = cell.value
+                    break
+                elif col == 3:  # dishes
+                    dish_id = cell.value
+                    old_discount = await cache.get(ce.discount, dish_id=dish_id)
+                    new_discount = worksheet.cell(row=row, column=col + 4).value
+                    if new_discount != old_discount:
+                        if new_discount is None or new_discount == 0:    # delete old_discount, don't save 0 discount
+                            await cache.delete(ce.discount, dish_id=dish_id)
+                        else:   # set new_discount, overwriting old_discount
+                            await cache.set(ce.discount, value=new_discount, dish_id=dish_id)
+                        # delete cache for dish_list, dish
+                        await cache.delete(ce.dish_list, ce.dish, menu_id=menu_id, submenu_id=submenu_id, dish_id=dish_id)
 
 
 @async_client
@@ -343,6 +394,7 @@ async def update_db_from_admin_async():
         await remove_extra_records(full_menu_db, full_menu_excel)
         await add_update_records(full_menu_db, full_menu_excel)
         update_excel_menu(full_menu_excel)
+    await cache_discounts()
 
 
 @celery.task
@@ -354,4 +406,5 @@ def update_db_from_admin():
 
 
 # update_db_from_admin()
-celery.add_periodic_task(15, update_db_from_admin.s(), name='task-name')
+if CELERY_ON:
+    celery.add_periodic_task(CELERY_TASK_TIME, update_db_from_admin.s(), name='task-name')

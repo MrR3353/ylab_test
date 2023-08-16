@@ -3,6 +3,7 @@ from fastapi import BackgroundTasks, Depends
 from api.models import menu
 from api.repositories.menu import MenuRepository
 from api.schemas import MenuDetailsResponse, MenuRequest
+from api.services.dish import DishService
 from cache.cache_repository import CacheEntity as ce
 from cache.cache_repository import CacheRepository, cached
 
@@ -59,4 +60,8 @@ class MenuService:
 
     async def get_all_with_submenu_dishes(self) -> list[MenuDetailsResponse]:
         result = await self.db_repo.get_all_with_submenu_dishes()
+        for m in result:  # applying discount
+            for s in m['submenus']:
+                s['dishes'] = await DishService().apply_discount(s['dishes'])
+        print(result)
         return result
