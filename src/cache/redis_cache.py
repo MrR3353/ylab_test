@@ -1,6 +1,7 @@
 import asyncio
 import functools
 from pickle import dumps, loads
+from typing import Any
 
 import redis.asyncio as redis
 
@@ -39,24 +40,24 @@ class RedisCache:
         self.connect = redis.Redis(host=host, port=6379)
 
     @switch
-    async def set(self, key: str, value):
+    async def set(self, key: str, value: Any) -> None:
         value = dumps(value)
         await self.connect.set(name=key, value=value, ex=CACHE_EXPIRE_TIME)
 
     @switch
-    async def get(self, key: str):
+    async def get(self, key: str) -> Any:
         value = await self.connect.get(name=key)
         if value is not None:
             value = loads(value)
         return value
 
     @switch
-    async def delete(self, key: str, is_pattern=False):
+    async def delete(self, key: str, is_pattern=False) -> None:
         await self.connect.delete(key)
         if is_pattern:
             async for key in self.connect.scan_iter(key + '*'):
                 await self.connect.delete(key)
 
     @switch
-    async def clear(self):
+    async def clear(self) -> None:
         await self.delete('', is_pattern=True)

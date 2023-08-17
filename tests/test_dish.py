@@ -5,12 +5,12 @@ from httpx import AsyncClient
 LAST_DISH = {}
 
 
-async def test_add_menu_submenu(ac: AsyncClient):
+async def test_add_menu_submenu(ac: AsyncClient) -> None:
     await test_menu.test_add_menu(ac)
     await test_submenu.test_add_submenu(ac)
 
 
-async def test_add_dish(ac: AsyncClient):
+async def test_add_dish(ac: AsyncClient) -> None:
     global LAST_DISH
     new_dish = {
         'title': 'Submenu title 1',
@@ -26,13 +26,13 @@ async def test_add_dish(ac: AsyncClient):
     test_menu.LAST_MENU['dishes_count'] += 1
 
 
-async def test_get_dish(ac: AsyncClient):
+async def test_get_dish(ac: AsyncClient) -> None:
     response = await ac.get(f'/api/v1/menus/{test_menu.LAST_MENU["id"]}/submenus/{test_submenu.LAST_SUBMENU["id"]}/dishes/{LAST_DISH["id"]}')
     assert response.json() == LAST_DISH
     assert response.status_code == 200
 
 
-async def test_update_dish(ac: AsyncClient):
+async def test_update_dish(ac: AsyncClient) -> None:
     global LAST_DISH
     new_dish = {
         'title': 'Updated dish title 1',
@@ -46,13 +46,13 @@ async def test_update_dish(ac: AsyncClient):
     assert response.status_code == 200
 
 
-async def test_get_all_dishes(ac: AsyncClient):
+async def test_get_all_dishes(ac: AsyncClient) -> None:
     response = await ac.get(f'/api/v1/menus/{test_menu.LAST_MENU["id"]}/submenus/{test_submenu.LAST_SUBMENU["id"]}/dishes/')
     assert response.json() == [LAST_DISH]
     assert response.status_code == 200
 
 
-async def test_get_all_dishes2(ac: AsyncClient):
+async def test_get_all_dishes2(ac: AsyncClient) -> None:
     # adding 2nd dish
     await test_add_dish(ac)
     response = await ac.get(f'/api/v1/menus/{test_menu.LAST_MENU["id"]}/submenus/{test_submenu.LAST_SUBMENU["id"]}/dishes/')
@@ -60,7 +60,7 @@ async def test_get_all_dishes2(ac: AsyncClient):
     assert response.status_code == 200
 
 
-async def test_delete_dishes(ac: AsyncClient, count=2):
+async def test_delete_dishes(ac: AsyncClient, count: int = 2) -> None:
     global LAST_DISH
     # deleting 2 dishes by default
     for i in range(count):
@@ -78,5 +78,5 @@ async def test_delete_dishes(ac: AsyncClient, count=2):
         test_menu.LAST_MENU['dishes_count'] -= 1
 
 
-async def test_delete_menu(ac: AsyncClient):
+async def test_delete_menu(ac: AsyncClient) -> None:
     await test_menu.test_delete_menu(ac, count=1)

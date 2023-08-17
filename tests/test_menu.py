@@ -3,7 +3,7 @@ from httpx import AsyncClient
 LAST_MENU = {}
 
 
-async def test_add_menu(ac: AsyncClient):
+async def test_add_menu(ac: AsyncClient) -> None:
     global LAST_MENU
     new_menu = {
         'title': 'Test title 1',
@@ -16,13 +16,13 @@ async def test_add_menu(ac: AsyncClient):
     assert response.status_code == 201
 
 
-async def test_get_menu(ac: AsyncClient):
+async def test_get_menu(ac: AsyncClient) -> None:
     response = await ac.get(f'/api/v1/menus/{LAST_MENU["id"]}')
     assert response.json() == LAST_MENU
     assert response.status_code == 200
 
 
-async def test_update_menu(ac: AsyncClient):
+async def test_update_menu(ac: AsyncClient) -> None:
     global LAST_MENU
     new_menu = {
         'title': 'Updated title 1',
@@ -35,13 +35,13 @@ async def test_update_menu(ac: AsyncClient):
     assert response.status_code == 200
 
 
-async def test_get_all_menu(ac: AsyncClient):
+async def test_get_all_menu(ac: AsyncClient) -> None:
     response = await ac.get('/api/v1/menus/')
     assert response.json() == [LAST_MENU]
     assert response.status_code == 200
 
 
-async def test_get_all_menu2(ac: AsyncClient):
+async def test_get_all_menu2(ac: AsyncClient) -> None:
     # adding 2nd menu
     await test_add_menu(ac)
     response = await ac.get('/api/v1/menus/')
@@ -49,7 +49,7 @@ async def test_get_all_menu2(ac: AsyncClient):
     assert response.status_code == 200
 
 
-async def test_delete_menu(ac: AsyncClient, count=2):
+async def test_delete_menu(ac: AsyncClient, count: int = 2) -> None:
     global LAST_MENU
     # deleting 2 menus by default
     for i in range(count):

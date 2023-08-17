@@ -14,7 +14,7 @@ app.include_router(router_dish)
 
 if CACHE_ENABLE:
     @app.on_event('startup')
-    async def clear_cache():
+    async def clear_cache() -> None:
         cache = RedisCache()
         await cache.clear()
 

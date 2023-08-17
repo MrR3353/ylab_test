@@ -6,7 +6,7 @@ import test_submenu
 from httpx import AsyncClient
 
 
-async def test_add_many_dishes(ac: AsyncClient, menu_count=2, submenu_in_menu=2, dish_in_submenu=2):
+async def test_add_many_dishes(ac: AsyncClient, menu_count: int = 2, submenu_in_menu: int = 2, dish_in_submenu: int = 2) -> None:
     for i in range(menu_count):
         await test_menu.test_add_menu(ac)
         for j in range(submenu_in_menu):

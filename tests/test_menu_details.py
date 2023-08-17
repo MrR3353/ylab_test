@@ -4,7 +4,7 @@ import test_submenu
 from httpx import AsyncClient
 
 
-async def test_menu_details(ac: AsyncClient, menu_count=2, submenu_in_menu=3, dish_in_submenu=4):
+async def test_menu_details(ac: AsyncClient, menu_count: int = 2, submenu_in_menu: int = 3, dish_in_submenu: int = 3) -> None:
     correct_menu = []
     for i in range(menu_count):
         await test_menu.test_add_menu(ac)

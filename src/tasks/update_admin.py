@@ -1,7 +1,7 @@
 import asyncio
 import functools
 import os
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Callable
 
 import openpyxl
 from httpx import AsyncClient
@@ -61,7 +61,7 @@ async def ac() -> AsyncGenerator[AsyncClient, None]:
         yield client
 
 
-def async_client(func):
+def async_client(func: Callable):
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         client = await ac().__anext__()

@@ -4,11 +4,11 @@ from httpx import AsyncClient
 LAST_SUBMENU = {}
 
 
-async def test_add_menu(ac: AsyncClient):
+async def test_add_menu(ac: AsyncClient) -> None:
     await test_menu.test_add_menu(ac)
 
 
-async def test_add_submenu(ac: AsyncClient):
+async def test_add_submenu(ac: AsyncClient) -> None:
     global LAST_SUBMENU
     new_submenu = {
         'title': 'Submenu title 1',
@@ -22,13 +22,13 @@ async def test_add_submenu(ac: AsyncClient):
     test_menu.LAST_MENU['submenus_count'] += 1
 
 
-async def test_get_submenu(ac: AsyncClient):
+async def test_get_submenu(ac: AsyncClient) -> None:
     response = await ac.get(f'/api/v1/menus/{test_menu.LAST_MENU["id"]}/submenus/{LAST_SUBMENU["id"]}')
     assert response.json() == LAST_SUBMENU
     assert response.status_code == 200
 
 
-async def test_update_submenu(ac: AsyncClient):
+async def test_update_submenu(ac: AsyncClient) -> None:
     global LAST_SUBMENU
     new_submenu = {
         'title': 'Updated submenu title 1',
@@ -41,13 +41,13 @@ async def test_update_submenu(ac: AsyncClient):
     assert response.status_code == 200
 
 
-async def test_get_all_submenu(ac: AsyncClient):
+async def test_get_all_submenu(ac: AsyncClient) -> None:
     response = await ac.get(f'/api/v1/menus/{test_menu.LAST_MENU["id"]}/submenus/')
     assert response.json() == [LAST_SUBMENU]
     assert response.status_code == 200
 
 
-async def test_get_all_submenu2(ac: AsyncClient):
+async def test_get_all_submenu2(ac: AsyncClient) -> None:
     # adding 2nd submenu
     await test_add_submenu(ac)
     response = await ac.get(f'/api/v1/menus/{test_menu.LAST_MENU["id"]}/submenus/')
@@ -55,7 +55,7 @@ async def test_get_all_submenu2(ac: AsyncClient):
     assert response.status_code == 200
 
 
-async def test_delete_submenu(ac: AsyncClient, count=2):
+async def test_delete_submenu(ac: AsyncClient, count: int = 2) -> None:
     global LAST_SUBMENU
     # deleting 2 submenus by default
     for i in range(count):
@@ -72,5 +72,5 @@ async def test_delete_submenu(ac: AsyncClient, count=2):
         test_menu.LAST_MENU['submenus_count'] -= 1
 
 
-async def test_delete_menu(ac: AsyncClient):
+async def test_delete_menu(ac: AsyncClient) -> None:
     await test_menu.test_delete_menu(ac, count=1)

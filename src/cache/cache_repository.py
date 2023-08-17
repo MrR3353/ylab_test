@@ -1,5 +1,6 @@
 import functools
 from enum import Enum
+from typing import Any
 
 from cache.redis_cache import RedisCache, switch
 
@@ -18,7 +19,7 @@ class CacheEntity(Enum):
 
 
 # caching get responses, getting or setting key
-def cached(key: CacheEntity, menu_id: int | None = None, submenu_id: int | None = None, dish_id: int | None = None):
+def cached(key: CacheEntity, menu_id: int | None = None, submenu_id: int | None = None, dish_id: int | None = None) -> Any:
     def inner(func):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
@@ -38,7 +39,7 @@ class CacheRepository:
         self.redis = RedisCache()
 
     @switch
-    async def get(self, key: CacheEntity, menu_id: int | None = None, submenu_id: int | None = None, dish_id: int | None = None):
+    async def get(self, key: CacheEntity, menu_id: int | None = None, submenu_id: int | None = None, dish_id: int | None = None) -> Any:
         if key == CacheEntity.discount:
             assert dish_id is not None
             return await self.redis.get(f'disc:{dish_id}:')
@@ -61,7 +62,7 @@ class CacheRepository:
                     return await self.redis.get(f'm:{menu_id}:s:{submenu_id}:d:{dish_id}:')
 
     @switch
-    async def set(self, key: CacheEntity, value, menu_id: int | None = None, submenu_id: int | None = None, dish_id: int | None = None):
+    async def set(self, key: CacheEntity, value, menu_id: int | None = None, submenu_id: int | None = None, dish_id: int | None = None) -> None:
         if key == CacheEntity.discount:
             assert dish_id is not None
             return await self.redis.set(f'disc:{dish_id}:', value)
@@ -84,7 +85,7 @@ class CacheRepository:
                     await self.redis.set(f'm:{menu_id}:s:{submenu_id}:d:{dish_id}:', value)
 
     @switch
-    async def delete(self, *args: CacheEntity, menu_id: int | None = None, submenu_id: int | None = None, dish_id: int | None = None):
+    async def delete(self, *args: CacheEntity, menu_id: int | None = None, submenu_id: int | None = None, dish_id: int | None = None) -> None:
         for arg in args:
             if arg == CacheEntity.discount:
                 if dish_id is None:

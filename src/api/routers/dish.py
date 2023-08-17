@@ -8,7 +8,6 @@ router_dish = APIRouter(prefix='/api/v1/menus/{menu_id}/submenus/{submenu_id}/di
 
 # TODO: maybe need to check menu_id, submenu_id for dishes???
 @router_dish.get('/', response_model=list[DishResponse], summary='Возвращает список всех блюд данных подменю и меню')
-# @router_dish.get('/', summary='Возвращает список всех блюд данных подменю и меню')
 async def get_all(menu_id: int, submenu_id: int, service: DishService = Depends()):
     return await service.get_all(menu_id, submenu_id)
 
